@@ -1,0 +1,6 @@
+<D:simple xmlns:D="DAV:">
+  <D:a>Foo</D:a>
+  <D:a href="some-url">Foo
+    bar</D:a>
+  <D:div><D:span>span</D:span></D:div>
+</D:simple>

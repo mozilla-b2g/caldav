@@ -5,11 +5,7 @@ var fs = require('fs'),
 suite('webcals/ics', function() {
 
   test('intiailizer', function() {
-    ics(data, function(data) {
-      console.log(data.vevent[0]);
-    }, function() {
-      console.log('y');
-    })
+    assert.ok(ics);
   });
 
 });

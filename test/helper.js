@@ -4,10 +4,6 @@ var chai = require('chai'),
 chai.Assertion.includeStack = true;
 assert = chai.assert;
 
-globalNS = {
-  require: require
-};
-
 loadSample = function(file, cb) {
   var root = __dirname + '/../samples/';
   fs.readFile(root + file, 'utf8', function(err, contents) {
@@ -15,6 +11,20 @@ loadSample = function(file, cb) {
   });
 };
 
+defineSample = function(file, cb) {
+  suiteSetup(function(done) {
+    loadSample(file, function(err, data) {
+      if (err) {
+        done(err);
+      }
+      cb(data);
+      done();
+    });
+  });
+};
+
 requireLib = function(lib) {
   return require(__dirname + '/../lib/webcals/' + lib);
 };
+
+Webcals = require('../lib/webcals/webcals.js');

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<D:complex xmlns:D="DAV:">
+  <D:response>
+  </D:response>
+
+  <D:response>
+    <D:href>uri</D:href>
+
+    <D:propstat>
+      <D:status>400</D:status>
+      <D:prop>
+        <A:current xmlns:A="DAV:" />
+      </D:prop>
+    </D:propstat>
+
+    <D:propstat>
+      <D:status>200</D:status>
+      <D:prop>
+        <A:next xmlns:A="DAV:" />
+      </D:prop>
+    </D:propstat>
+  </D:response>
+</D:complex>
+
