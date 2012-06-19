@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<D:propfind xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:D="DAV:">
+<D:propfind xmlns:C="urn:ietf:params:xml:ns:webcals" xmlns:CS="http://calendarserver.org/ns/" xmlns:D="DAV:">
   <D:prop>
     <D:resourcetype/>
     <D:owner/>

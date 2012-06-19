@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <C:calendar-query xmlns:D="DAV:"
-                 xmlns:C="urn:ietf:params:xml:ns:caldav">
+                 xmlns:C="urn:ietf:params:xml:ns:webcals">
  <D:prop>
    <D:getetag/>
    <C:calendar-data/>

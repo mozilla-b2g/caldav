@@ -1,4 +1,4 @@
-var XHR = require('./lib/caldav/xhr.js');
+var XHR = require('./lib/webcals/xhr.js');
 var url, user, pass, domain;
 
 function getBody(file) {
@@ -7,7 +7,7 @@ function getBody(file) {
   );
 }
 
-domain = 'http://localdav.com';
+domain = 'http://lowebcals.com';
 uri = '/calendars/admin';
 user = 'admin';
 pass = 'admin';
@@ -40,7 +40,7 @@ function request(options) {
 function getProps() {
 
  var  body = '<?xml version="1.0" encoding="utf-8" ?>' +
-  '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">' +
+  '<D:propfind xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:webcals">' +
    '<D:prop>' +
      '<C:calendar-home-set/>' +
      '<C:calendar-user-address-set/>' +

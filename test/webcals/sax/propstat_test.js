@@ -1,4 +1,4 @@
-suite('caldav/sax/propstat', function() {
+suite('webcals/sax/propstat', function() {
   var stat = requireLib('sax/propstat'),
       sax = requireLib('sax'),
       subject;

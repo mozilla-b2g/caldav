@@ -4,7 +4,7 @@
     <D:propstat> 
       <D:status>HTTP/1.1 200 OK</D:status> 
       <D:prop> 
-        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:webcals">BEGIN:VCALENDAR
           VERSION:2.0 PRODID:Zimbra-Calendar-Provider
           BEGIN:VTIMEZONE TZID:Etc/GMT
           BEGIN:STANDARD DTSTART:19710101T000000
@@ -27,7 +27,7 @@
     <D:propstat> 
       <D:status>HTTP/1.1 200 OK</D:status> 
       <D:prop> 
-        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:webcals">BEGIN:VCALENDAR
           VERSION:2.0 PRODID:Zimbra-Calendar-Provider
           BEGIN:VEVENT UID:25b74da2-47d3-4ea8-be27-774fb13041b8
           SUMMARY:Bar ORGANIZER;CN=Sahaja Lal:mailto:calmozilla1@yahoo.com
@@ -46,7 +46,7 @@
     <D:propstat> 
       <D:status>HTTP/1.1 200 OK</D:status> 
       <D:prop> 
-        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:webcals">BEGIN:VCALENDAR
           VERSION:2.0 PRODID:Zimbra-Calendar-Provider
           BEGIN:VEVENT UID:a8c499cb-3cab-44d5-ab1e-18abc0f5286f
           SUMMARY:Baz ORGANIZER;CN=Sahaja Lal:mailto:calmozilla1@yahoo.com

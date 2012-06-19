@@ -6,7 +6,7 @@ test:
 		--ui tdd \
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
-		test/caldav/*_test.js
+		test/webcals/*_test.js
 
 .PHONY: watch
 FILES=
