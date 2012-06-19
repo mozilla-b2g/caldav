@@ -278,6 +278,17 @@ suite('webcals/sax', function() {
       ResponseHandler = Base.create({
         name: 'response',
 
+        onopentag: function(data, handler) {
+          //if you don't want to append items
+          //to the object its fairly simple just
+          //orphan the tag.
+          if (data.tagSpec === 'DAV:/response') {
+            return this.current = {};
+          }
+
+          handler._super.onopentag.call(this, data, handler);
+        },
+
         handles: {
           'DAV:/href': TextOnlyHandler,
           'DAV:/status': TextOnlyHandler,
@@ -322,7 +333,6 @@ suite('webcals/sax', function() {
 
       expectedResult = {
         complex: {
-          response: [{}, expectedEvent]
         }
       };
 
