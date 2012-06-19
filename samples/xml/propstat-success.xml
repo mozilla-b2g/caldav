@@ -1,0 +1,10 @@
+<D:status>HTTP/1.1 200 OK</D:status>
+<D:prop>
+  <D:principal-URL>
+    <D:href>/calendar/dav/calmozilla1@gmail.com/user/</D:href>
+  </D:principal-URL>
+  <D:resourcetype>
+    <D:principal />
+    <D:collection />
+  </D:resourcetype>
+</D:prop>

@@ -1,0 +1,63 @@
+<D:multistatus xmlns:D="DAV:"> 
+  <D:response> 
+    <D:href>/dav/calmozilla1/Calendar/calmozilla1/6e4d147f-4d75-436f-a233-976fd06fd3f7.ics</D:href> 
+    <D:propstat> 
+      <D:status>HTTP/1.1 200 OK</D:status> 
+      <D:prop> 
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+          VERSION:2.0 PRODID:Zimbra-Calendar-Provider
+          BEGIN:VTIMEZONE TZID:Etc/GMT
+          BEGIN:STANDARD DTSTART:19710101T000000
+          TZOFFSETTO:-0000 TZOFFSETFROM:-0000
+          TZNAME:GMT END:STANDARD
+          END:VTIMEZONE BEGIN:VEVENT
+          UID:6e4d147f-4d75-436f-a233-976fd06fd3f7 SUMMARY:Foo
+          ORGANIZER:mailto:calmozilla1@yahoo.com DTSTART;TZID="Etc/GMT":20120629T143000
+          DTEND;TZID="Etc/GMT":20120629T150000 STATUS:CONFIRMED
+          CLASS:PUBLIC X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+          TRANSP:OPAQUE X-MICROSOFT-DISALLOW-COUNTER:TRUE
+          DTSTAMP:20120616T221243Z SEQUENCE:0
+          END:VEVENT END:VCALENDAR</C:calendar-data> 
+        <D:getetag>"2-2"</D:getetag> 
+      </D:prop> 
+    </D:propstat> 
+  </D:response> 
+  <D:response> 
+    <D:href>/dav/calmozilla1/Calendar/calmozilla1/25b74da2-47d3-4ea8-be27-774fb13041b8.ics</D:href> 
+    <D:propstat> 
+      <D:status>HTTP/1.1 200 OK</D:status> 
+      <D:prop> 
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+          VERSION:2.0 PRODID:Zimbra-Calendar-Provider
+          BEGIN:VEVENT UID:25b74da2-47d3-4ea8-be27-774fb13041b8
+          SUMMARY:Bar ORGANIZER;CN=Sahaja Lal:mailto:calmozilla1@yahoo.com
+          DTSTART;VALUE=DATE:20120630 DTEND;VALUE=DATE:20120701
+          STATUS:CONFIRMED CLASS:PUBLIC
+          X-MICROSOFT-CDO-ALLDAYEVENT:TRUE X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+          TRANSP:OPAQUE X-MICROSOFT-DISALLOW-COUNTER:TRUE
+          DTSTAMP:20120616T221255Z SEQUENCE:0
+          END:VEVENT END:VCALENDAR</C:calendar-data> 
+        <D:getetag>"3-3"</D:getetag> 
+      </D:prop> 
+    </D:propstat> 
+  </D:response> 
+  <D:response> 
+    <D:href>/dav/calmozilla1/Calendar/calmozilla1/a8c499cb-3cab-44d5-ab1e-18abc0f5286f.ics</D:href> 
+    <D:propstat> 
+      <D:status>HTTP/1.1 200 OK</D:status> 
+      <D:prop> 
+        <C:calendar-data xmlns:C="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+          VERSION:2.0 PRODID:Zimbra-Calendar-Provider
+          BEGIN:VEVENT UID:a8c499cb-3cab-44d5-ab1e-18abc0f5286f
+          SUMMARY:Baz ORGANIZER;CN=Sahaja Lal:mailto:calmozilla1@yahoo.com
+          DTSTART;VALUE=DATE:20120628 DTEND;VALUE=DATE:20120629
+          STATUS:CONFIRMED CLASS:PUBLIC
+          X-MICROSOFT-CDO-ALLDAYEVENT:TRUE X-MICROSOFT-CDO-INTENDEDSTATUS:BUSY
+          TRANSP:OPAQUE X-MICROSOFT-DISALLOW-COUNTER:TRUE
+          DTSTAMP:20120616T221305Z SEQUENCE:0
+          END:VEVENT END:VCALENDAR</C:calendar-data> 
+        <D:getetag>"4-4"</D:getetag> 
+      </D:prop> 
+    </D:propstat> 
+  </D:response> 
+</D:multistatus>
