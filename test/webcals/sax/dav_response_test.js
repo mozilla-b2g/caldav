@@ -34,11 +34,11 @@ suite('webcals/sax/base', function() {
     });
 
     expected = {
-      '/calendar/user': {
+      '/calendar/user/': {
 
         'principal-URL': {
           status: '200',
-          value: '/calendar/user/'
+          value: '/calendar/pinc/'
         },
 
         resourcetype: {
@@ -47,6 +47,11 @@ suite('webcals/sax/base', function() {
             'principal',
             'collection'
           ]
+        },
+
+        'current-user-principal': {
+          status: '404',
+          value: {}
         }
       },
 
@@ -60,12 +65,12 @@ suite('webcals/sax/base', function() {
 
     test('output', function(done) {
       subject.once('complete', function(data) {
-        console.log(JSON.stringify(data));
-        //assert.deepEqual(
-          //data, expected,
-          //"expected \n '" + JSON.stringify(data) + "'\n to equal \n '" +
-          //JSON.stringify(expected) + '\n"'
-        //);
+        console.log(JSON.stringify(data.multistatus));
+        assert.deepEqual(
+          data.multistatus, expected,
+          "expected \n '" + JSON.stringify(data.multistatus) +
+          "'\n to equal \n '" + JSON.stringify(expected) + '\n"'
+        );
         done();
       });
       subject.write(xml).close();
