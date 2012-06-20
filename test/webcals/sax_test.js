@@ -169,15 +169,16 @@ suite('webcals/sax', function() {
     test('basic event', function() {
       var obj = {
         local: 'foo',
-        uri: 'bar'
+        uri: 'bar',
+        name: 'foo'
       };
 
       subject.onopentag(obj);
-      assert.equal(subject.currentTag, obj);
       assert.equal(obj.tagSpec, 'bar/foo');
       assert.deepEqual(
-        subject.tagStack,
-        [{ tag: 'bar/foo' }]
+        subject.tagStack[0].tagSpec,
+        'bar/foo',
+        'works'
       );
 
       firesHandler('opentag', obj);
@@ -192,7 +193,8 @@ suite('webcals/sax', function() {
       subject.registerHandler('a/a', newHandler);
       subject.onopentag({
         local: 'a',
-        uri: 'a'
+        uri: 'a',
+        name: 'a'
       });
     });
 
@@ -200,7 +202,7 @@ suite('webcals/sax', function() {
       assert.equal(subject.handler, newHandler);
       assert.deepEqual(
         subject.tagStack, [
-          { tag: 'a/a', handler: newHandler }
+          { tagSpec: 'a/a', local: 'a', name: 'a', handler: newHandler }
         ]
       );
     });
