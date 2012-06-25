@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<A:propfind xmlns:A="DAV:">
+  <A:prop>
+    <F:calendar-color xmlns:F="http://apple.com/ns/ical/" />
+    <D:calendar-description xmlns:D="urn:ietf:params:xml:ns:caldav" />
+    <D:calendar-free-busy-set xmlns:D="urn:ietf:params:xml:ns:caldav" /> 
+    <F:calendar-order xmlns:F="http://apple.com/ns/ical/" />
+    <D:calendar-timezone xmlns:D="urn:ietf:params:xml:ns:caldav" />
+    <A:displayname />
+    <B:getctag xmlns:B="http://calendarserver.org/ns/" />
+    <A:owner />
+    <A:quota-available-bytes />
+    <A:quota-used-bytes />
+    <A:resourcetype />
+    <D:supported-calendar-component-set xmlns:D="urn:ietf:params:xml:ns:caldav" />
+  </A:prop>
+</A:propfind>

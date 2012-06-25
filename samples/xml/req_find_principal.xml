@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<A:propfind xmlns:A="DAV:"> 
+  <A:prop>
+    <A:principal-URL />
+    <A:resourcetype />
+    <B:allowed-calendar-component-set xmlns:B="http://calendarserver.org/ns/" /> 
+    <D:calendar-home-set xmlns:D="urn:ietf:params:xml:ns:caldav" /> 
+    <D:calendar-user-address-set xmlns:D="urn:ietf:params:xml:ns:caldav" /> 
+    <A:current-user-principal />
+    <A:displayname />
+  </A:prop>
+</A:propfind>
