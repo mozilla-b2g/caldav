@@ -31,10 +31,10 @@ suite('webcals/request/abstract.js', function() {
     FakeXhr.instances.length = 0;
   });
 
-  test('#_createXhr', function() {
-    var result = subject._createXhr();
-    assert.instanceOf(result, Xhr);
-    assert.equal(result.url, url);
+  test('.xhr', function() {
+    var xhr = subject.xhr;
+    assert.instanceOf(xhr, Xhr);
+    assert.equal(xhr.url, url);
   });
 
   test('#_createPayload', function() {
@@ -84,7 +84,7 @@ suite('webcals/request/abstract.js', function() {
         });
 
         xhr = getXhr();
-        xhr.respond(xml, 200);
+        xhr.respond(xml, 207);
       });
 
       test('on response', function() {
