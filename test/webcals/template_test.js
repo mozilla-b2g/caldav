@@ -73,6 +73,14 @@ suite('templates', function() {
       assert.equal(out, '<N0:bar>content</N0:bar>');
     });
 
+    test('self closing', function() {
+      var out = subject.tag('baz', { type: 'text' });
+      assert.equal(
+        out,
+        '<N0:baz type="text" />'
+      );
+    });
+
     test('with attrs', function() {
       var out = subject.tag('bar', {
         value: 'val'
