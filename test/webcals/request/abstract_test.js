@@ -31,20 +31,27 @@ suite('webcals/request/abstract.js', function() {
     FakeXhr.instances.length = 0;
   });
 
-  test('.xhr', function() {
-    var xhr = subject.xhr;
-    assert.instanceOf(xhr, Xhr);
-    assert.equal(xhr.url, url);
-  });
-
   test('#_createPayload', function() {
     assert.equal(subject._createPayload(), '');
   });
 
   test('#initializer', function() {
-    assert.equal(subject.url, url);
+    assert.instanceOf(subject.xhr, Xhr);
+    assert.equal(subject.xhr.url, url);
     assert.equal(subject.configOpt, options.configOpt);
     assert.instanceOf(subject.sax, SAX);
+  });
+
+  test('xhr password options', function() {
+    var subject = new Abstract(url, {
+      password: 'password',
+      user: 'user'
+    });
+
+    var xhr = subject.xhr;
+
+    assert.equal(xhr.password, 'password');
+    assert.equal(xhr.user, 'user');
   });
 
   suite('#send', function(done) {
