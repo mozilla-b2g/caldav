@@ -7,6 +7,7 @@ test:
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
 		test/webcals/sax/*_test.js \
+		test/webcals/request/*_test.js \
 		test/webcals/*_test.js
 
 .PHONY: watch

@@ -5,7 +5,11 @@
     this.sendArgs = null;
     this.headers = {};
     this.responseHeaders = {};
+
+    FakeXhr.instances.push(this);
   }
+
+  FakeXhr.instances = [];
 
   FakeXhr.prototype = {
     open: function() {
@@ -26,8 +30,8 @@
 
     respond: function(data, code) {
       this.readyState = 4;
-      this.responseHeaders['content-type'] = 'application/json';
-      this.responseText = JSON.stringify(data);
+      this.responseHeaders['content-type'] = 'text/xml';
+      this.responseText = data;
       this.status = code || 200;
       this.onreadystatechange();
     }

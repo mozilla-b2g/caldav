@@ -58,12 +58,10 @@ suite('webacls/xhr', function() {
     var data = '<html></html>',
         url = 'http://foo',
         xhr,
-        responseData,
         responseXhr;
 
     function callback(done, data, xhr) {
       responseXhr = xhr;
-      responseData = data;
       done();
     }
 
@@ -98,10 +96,9 @@ suite('webacls/xhr', function() {
 
     setup(function() {
       responseXhr = null;
-      responseData = null;
     });
 
-    suite('when xhr is a success and responds /w json', function() {
+    suite('when xhr is a success and responds /w data', function() {
       var response = '<html></html>', cb;
 
       setup(function(done) {
@@ -129,7 +126,6 @@ suite('webacls/xhr', function() {
 
       test('should send callback parsed data and xhr', function() {
         assert.equal(responseXhr, subject.xhr);
-        assert.deepEqual(responseData, response);
       });
 
       opensXHR();

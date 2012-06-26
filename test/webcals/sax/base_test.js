@@ -56,7 +56,7 @@ suite('webcals/sax/base', function() {
   });
 
   suite('base parser', function() {
-    var xml;
+    var xml, data;
 
     defineSample('xml/simple.xml', function(data) {
       xml = data;
@@ -64,7 +64,7 @@ suite('webcals/sax/base', function() {
 
     //base baser does not
     //care about attrs at this point
-    expected = {
+    var expected = {
       simple: {
         a: [
           { value: 'Foo' },

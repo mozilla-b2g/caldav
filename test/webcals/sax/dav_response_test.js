@@ -2,7 +2,7 @@ requireLib('sax');
 requireLib('sax/base');
 requireLib('sax/dav_response');
 
-suite('webcals/sax/base', function() {
+suite('webcals/sax/dav_response', function() {
 
   var data,
       subject,
@@ -65,7 +65,6 @@ suite('webcals/sax/base', function() {
 
     test('output', function(done) {
       subject.once('complete', function(data) {
-        console.log(JSON.stringify(data.multistatus));
         assert.deepEqual(
           data.multistatus, expected,
           "expected \n '" + JSON.stringify(data.multistatus) +
