@@ -1,7 +1,4 @@
-requireLib('xhr');
-requireLib('sax');
-requireLib('request/abstract');
-requireSupport('fake_xhr');
+requireRequest();
 
 suite('webcals/request/abstract.js', function() {
   var subject;

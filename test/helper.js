@@ -48,5 +48,19 @@
     }
   }
 
+  requireRequest = function(callback) {
+    requireLib('xhr');
+    requireLib('sax');
+    requireLib('request/abstract');
+    requireLib('template');
+    requireSupport('fake_xhr');
+
+
+    //in the future we need a callback for browser support.
+    if (typeof(callback) !== 'undefined') {
+      callback();
+    }
+  };
+
 }());
 
