@@ -77,6 +77,22 @@ suite('webcals/request/propfind', function() {
     assert.equal(subject._createPayload(), expected);
   });
 
+  test('#_processResult', function(done) {
+    var inner = {},
+        req = {};
+
+    subject.sax.root = {
+      multistatus: inner
+    };
+
+    subject._processResult(req, function(err, obj, xhr) {
+      assert.equal(xhr, req);
+      assert.equal(obj, inner);
+      assert.equal(err, null);
+      done();
+    });
+  });
+
   suite('integration', function() {
     var xml,
         data,
@@ -101,8 +117,7 @@ suite('webcals/request/propfind', function() {
     });
 
     test('simple tree', function() {
-      assert.ok(data.multistatus);
-      assert.ok(data.multistatus['/calendar/user/']);
+      assert.ok(data['/calendar/user/']);
     });
   });
 
