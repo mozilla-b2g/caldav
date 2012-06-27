@@ -5,6 +5,7 @@ suite('webcals/ics', function() {
   var ical;
 
   suiteSetup(function() {
+    console.log(Webcals);
     ical = Webcals.require('ical');
   });
 

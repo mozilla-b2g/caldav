@@ -1,4 +1,5 @@
 requireRequest();
+testSupport.lib('request/propfind');
 
 suite('webcals/request/propfind', function() {
   var Abstract,

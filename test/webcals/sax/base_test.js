@@ -1,3 +1,4 @@
+testSupport.lib('responder');
 testSupport.lib('sax');
 testSupport.lib('sax/base');
 

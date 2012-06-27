@@ -9,11 +9,19 @@ package: test-agent-config
 	cp ./node_modules/mocha/mocha.js $(VENDOR)
 	cp ./node_modules/mocha/mocha.css $(VENDOR)
 	cp ./node_modules/chai/chai.js $(VENDOR)
+	cp ./node_modules/sax/lib/sax.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.css $(VENDOR)
 
-.PHONY: test
-test:
+
+test: test-node test-browser
+
+.PHONY: test-browser
+test-browser:
+	./node_modules/test-agent/bin/js-test-agent test --reporter Spec
+
+.PHONY: test-node
+test-node:
 	./node_modules/mocha/bin/mocha \
 		--ui tdd \
 		--reporter $(REPORTER) \
@@ -32,7 +40,7 @@ test-agent-config:
 	# Build json array of all test files
 	for d in test; \
 	do \
-		find $$d -name '*_test.js' | sed "s:$$d/::g"  >> /tmp/test-agent-config; \
+		find $$d -name '*_test.js' | sed "s:$$d/:/$$d/:g"  >> /tmp/test-agent-config; \
 	done;
 	@echo '{"tests": [' >> $(TEST_AGENT_CONFIG)
 	@cat /tmp/test-agent-config |  \

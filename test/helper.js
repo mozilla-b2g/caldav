@@ -1,5 +1,6 @@
 (function() {
 
+  var requireBak;
   var specialRequires = {
     'chai': requireChai
   };
@@ -8,11 +9,30 @@
     isNode: (typeof(window) === 'undefined')
   };
 
+
+  /* stream hack for SAX */
+
+  if (!testSupport.isNode) {
+    requireBak = require;
+
+    require = function require_shim(type) {
+      if (type === 'stream') {
+        throw new Error('this is not node');
+      }
+
+      requireBak.apply(this, arguments);
+    }
+  }
+
   /* cross require */
 
   testSupport.require = function cross_require(file, callback) {
     if (file in specialRequires) {
       return specialRequires[file](file, callback);
+    }
+
+    if (!(/\.js$/.test(file))) {
+      file += '.js';
     }
 
     if (typeof(window) === 'undefined') {
@@ -43,6 +63,10 @@
 
   testSupport.require('chai');
 
+  if (!testSupport.isNode) {
+    testSupport.require('/vendor/sax');
+  }
+
   testSupport.loadSample = function(file, cb) {
     if (testSupport.isNode) {
       var root = __dirname + '/../samples/';
@@ -50,7 +74,18 @@
         cb(err, contents);
       });
     } else {
-      //xhr samples
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/samples/' + file, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status !== 200) {
+            cb(new Error('file not found or other error', xhr));
+          } else {
+            cb(null, xhr.responseText);
+          }
+        }
+      }
+      xhr.send(null);
     }
   };
 
@@ -90,10 +125,15 @@
   }
 
   requireRequest = function(callback) {
+    testSupport.lib('responder');
     testSupport.lib('xhr');
     testSupport.lib('sax');
+    testSupport.lib('sax/base');
+    testSupport.lib('sax/dav_response');
     testSupport.lib('request/abstract');
     testSupport.lib('template');
+    testSupport.lib('templates/calendar_data');
+    testSupport.lib('templates/calendar_filter');
     testSupport.helper('fake_xhr');
 
     //in the future we need a callback for browser support.

@@ -14,7 +14,8 @@
     /* path to mocha */
     mochaUrl: '../vendor/mocha.js',
     testHelperUrl: '../test/helper.js',
-    reporter: 'HTML'
+    reporter: 'HTML',
+    ui: 'tdd'
   });
 
   worker.use(TestAgent.BrowserWorker.Websocket);
