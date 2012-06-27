@@ -3,8 +3,8 @@ requireLib('request/propfind');
 requireLib('request/calendar_query');
 
 suite('webcals/request/propfind', function() {
-  var Abstract,
-      Propfind,
+  var Propfind,
+      CalendarData,
       FakeXhr,
       CalendarQuery,
       Xhr,
@@ -17,6 +17,7 @@ suite('webcals/request/propfind', function() {
 
   suiteSetup(function() {
     Propfind = Webcals.require('request/propfind');
+    CalendarData = Webcals.require('templates/calendar_data');
     CalendarQuery = Webcals.require('request/calendar_query');
     SaxResponse = Webcals.require('sax/dav_response');
     FakeXhr = Webcals.require('support/fake_xhr');
@@ -41,31 +42,31 @@ suite('webcals/request/propfind', function() {
     assert.deepEqual(subject._props, []);
     assert.equal(subject.xhr.headers['Depth'], 1);
     assert.equal(subject.xhr.method, 'REPORT');
-  });
 
-  test('#prop', function() {
-    var expected = subject.template.tag('test');
-
-    subject.prop('test');
-
-    assert.deepEqual(subject._props, [expected]);
+    assert.instanceOf(subject.fields, CalendarData);
   });
 
   test('#_createPayload', function() {
-    return;
-    subject.prop('foo');
-    subject.prop('bar');
+    subject.prop('getetag');
+    subject.fields.select('VEVENT', ['NAME']);
 
     var tags = [
-      '<N0:foo />',
-      '<N0:bar />'
+      '<N0:getetag />',
+      '<N1:calendar-data>',
+        '<N1:comp name="VCALENDAR">',
+          '<N1:comp name="VEVENT">',
+            '<N1:prop name="NAME" />',
+          '</N1:comp>',
+        '</N1:comp>',
+      '</N1:calendar-data>'
     ].join('');
 
     var expected = [
       subject.template.doctype,
-      '<N0:propfind xmlns:N0="DAV:">',
+      '<N0:calendar-query xmlns:N0="DAV:" ',
+          'xmlns:N1="urn:ietf:params:xml:ns:caldav">',
         '<N0:prop>', tags, '</N0:prop>',
-      '</N0:propfind>'
+      '</N0:calendar-query>'
     ].join('');
 
     assert.equal(subject._createPayload(), expected);
