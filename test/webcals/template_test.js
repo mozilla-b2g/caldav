@@ -81,6 +81,21 @@ suite('templates', function() {
       );
     });
 
+    test('when given a an object /w .render in content', function() {
+      var obj = {
+        render: function(template) {
+          return template.tag('baz');
+        }
+      };
+
+      var out = subject.tag('foo', obj);
+
+      assert.equal(
+        out,
+        '<N0:foo><N0:baz /></N0:foo>'
+      );
+    });
+
     test('with attrs', function() {
       var out = subject.tag('bar', {
         value: 'val'
