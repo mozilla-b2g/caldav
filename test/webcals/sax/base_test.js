@@ -1,5 +1,5 @@
-requireLib('sax');
-requireLib('sax/base');
+testSupport.requireLib('sax');
+testSupport.requireLib('sax/base');
 
 suite('webcals/sax/base', function() {
 
@@ -58,7 +58,7 @@ suite('webcals/sax/base', function() {
   suite('base parser', function() {
     var xml, data;
 
-    defineSample('xml/simple.xml', function(data) {
+    testSupport.defineSample('xml/simple.xml', function(data) {
       xml = data;
     });
 

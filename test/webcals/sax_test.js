@@ -1,5 +1,5 @@
-requireLib('sax');
-requireLib('sax/base');
+testSupport.requireLib('sax');
+testSupport.requireLib('sax/base');
 
 suite('webcals/sax', function() {
 
@@ -255,7 +255,7 @@ suite('webcals/sax', function() {
     var ResponseHandler;
     var TextOnlyHandler;
 
-    defineSample('xml/complex-tree.xml', function(data) {
+    testSupport.defineSample('xml/complex-tree.xml', function(data) {
       xml = data;
     });
 

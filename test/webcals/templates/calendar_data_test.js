@@ -1,5 +1,5 @@
 requireRequest();
-requireLib('templates/calendar_data');
+testSupport.requireLib('templates/calendar_data');
 
 suite('webcals/templates/calendar_data', function() {
   var CalendarData;

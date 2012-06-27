@@ -1,4 +1,4 @@
-requireLib('template');
+testSupport.requireLib('template');
 
 suite('templates', function() {
 

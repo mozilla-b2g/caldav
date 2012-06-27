@@ -1,6 +1,6 @@
 requireRequest();
-requireLib('request/propfind');
-requireLib('request/calendar_query');
+testSupport.requireLib('request/propfind');
+testSupport.requireLib('request/calendar_query');
 
 suite('webcals/request/calendar_query', function() {
   var Propfind,
@@ -91,7 +91,7 @@ suite('webcals/request/calendar_query', function() {
         xhr,
         calledWith;
 
-    defineSample('xml/propget.xml', function(data) {
+    testSupport.defineSample('xml/propget.xml', function(data) {
       xml = data;
     });
 

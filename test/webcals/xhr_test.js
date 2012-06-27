@@ -1,5 +1,5 @@
-requireLib('xhr');
-requireSupport('fake_xhr');
+testSupport.requireLib('xhr');
+testSupport.requireSupport('fake_xhr');
 
 suite('webacls/xhr', function() {
   var subject,

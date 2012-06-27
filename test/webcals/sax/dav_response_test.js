@@ -1,7 +1,7 @@
-requireLib('sax');
-requireLib('sax/base');
-requireLib('sax/dav_response');
-requireLib('ical');
+testSupport.requireLib('sax');
+testSupport.requireLib('sax/base');
+testSupport.requireLib('sax/dav_response');
+testSupport.requireLib('ical');
 
 suite('webcals/sax/dav_response', function() {
 
@@ -30,7 +30,7 @@ suite('webcals/sax/dav_response', function() {
   suite('parsing', function() {
     var xml;
 
-    defineSample('xml/propget.xml', function(data) {
+    testSupport.defineSample('xml/propget.xml', function(data) {
       xml = data;
     });
 

@@ -98,7 +98,7 @@ suite('webcals/request/propfind', function() {
         xhr,
         calledWith;
 
-    defineSample('xml/propget.xml', function(data) {
+    testSupport.defineSample('xml/propget.xml', function(data) {
       xml = data;
     });
 

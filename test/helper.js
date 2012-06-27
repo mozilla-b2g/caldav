@@ -1,21 +1,62 @@
 (function() {
-  var chai = require('chai'),
-      fs = require('fs'),
-      path = require('path');
 
-  chai.Assertion.includeStack = true;
-  assert = chai.assert;
-
-  loadSample = function(file, cb) {
-    var root = __dirname + '/../samples/';
-    fs.readFile(root + file, 'utf8', function(err, contents) {
-      cb(err, contents);
-    });
+  var specialRequires = {
+    'chai': requireChai
   };
 
-  defineSample = function(file, cb) {
+  testSupport = {
+    isNode: (typeof(window) === 'undefined')
+  };
+
+  /* cross require */
+
+  testSupport.require = function cross_require(file, callback) {
+    if (file in specialRequires) {
+      return specialRequires[file](file, callback);
+    }
+
+    if (typeof(window) === 'undefined') {
+      var lib = require(__dirname + '/../' + file);
+      if (typeof(callback) !== 'undefined') {
+        callback(lib);
+      }
+    } else {
+      window.require(file, callback);
+    }
+  }
+
+  function setupChai(chai) {
+    chai.Assertion.includeStack = true;
+    assert = chai.assert;
+  }
+
+  function requireChai(file, callback) {
+    var path;
+    if (testSupport.isNode) {
+      setupChai(require('chai'));
+    } else {
+      require('/vendor/chai.js', function() {
+        setupChai(chai);
+      });
+    }
+  }
+
+  testSupport.require('chai');
+
+  testSupport.loadSample = function(file, cb) {
+    if (testSupport.isNode) {
+      var root = __dirname + '/../samples/';
+      require('fs').readFile(root + file, 'utf8', function(err, contents) {
+        cb(err, contents);
+      });
+    } else {
+      //xhr samples
+    }
+  };
+
+  testSupport.defineSample = function(file, cb) {
     suiteSetup(function(done) {
-      loadSample(file, function(err, data) {
+      testSupport.loadSample(file, function(err, data) {
         if (err) {
           done(err);
         }
@@ -25,12 +66,12 @@
     });
   };
 
-  requireLib = function(lib) {
-    return require(__dirname + '/../lib/webcals/' + lib);
+  testSupport.requireLib = function(lib, callback) {
+     testSupport.require('/lib/webcals/' + lib, callback);
   };
 
-  requireSupport = function(lib) {
-    return require(__dirname + '/support/' + lib);
+  testSupport.requireSupport = function(lib) {
+    testSupport.require('/test/support/' + lib);
   }
 
   Webcals = require('../lib/webcals/webcals.js');
@@ -49,12 +90,11 @@
   }
 
   requireRequest = function(callback) {
-    requireLib('xhr');
-    requireLib('sax');
-    requireLib('request/abstract');
-    requireLib('template');
-    requireSupport('fake_xhr');
-
+    testSupport.requireLib('xhr');
+    testSupport.requireLib('sax');
+    testSupport.requireLib('request/abstract');
+    testSupport.requireLib('template');
+    testSupport.requireSupport('fake_xhr');
 
     //in the future we need a callback for browser support.
     if (typeof(callback) !== 'undefined') {
@@ -63,4 +103,5 @@
   };
 
 }());
+
 
