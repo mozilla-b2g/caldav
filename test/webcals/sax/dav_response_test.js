@@ -1,7 +1,7 @@
-testSupport.requireLib('sax');
-testSupport.requireLib('sax/base');
-testSupport.requireLib('sax/dav_response');
-testSupport.requireLib('ical');
+testSupport.lib('sax');
+testSupport.lib('sax/base');
+testSupport.lib('sax/dav_response');
+testSupport.lib('ical');
 
 suite('webcals/sax/dav_response', function() {
 

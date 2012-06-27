@@ -1,6 +1,6 @@
 requireRequest();
-testSupport.requireLib('request/propfind');
-testSupport.requireLib('request/calendar_query');
+testSupport.lib('request/propfind');
+testSupport.lib('request/calendar_query');
 
 suite('webcals/request/calendar_query', function() {
   var Propfind,

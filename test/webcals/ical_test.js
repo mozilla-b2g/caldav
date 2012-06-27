@@ -1,4 +1,4 @@
-testSupport.requireLib('ical'),
+testSupport.lib('ical'),
 
 suite('webcals/ics', function() {
 

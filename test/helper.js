@@ -66,11 +66,11 @@
     });
   };
 
-  testSupport.requireLib = function(lib, callback) {
+  testSupport.lib = function(lib, callback) {
      testSupport.require('/lib/webcals/' + lib, callback);
   };
 
-  testSupport.requireSupport = function(lib) {
+  testSupport.helper = function(lib) {
     testSupport.require('/test/support/' + lib);
   }
 
@@ -90,11 +90,11 @@
   }
 
   requireRequest = function(callback) {
-    testSupport.requireLib('xhr');
-    testSupport.requireLib('sax');
-    testSupport.requireLib('request/abstract');
-    testSupport.requireLib('template');
-    testSupport.requireSupport('fake_xhr');
+    testSupport.lib('xhr');
+    testSupport.lib('sax');
+    testSupport.lib('request/abstract');
+    testSupport.lib('template');
+    testSupport.helper('fake_xhr');
 
     //in the future we need a callback for browser support.
     if (typeof(callback) !== 'undefined') {

@@ -1,5 +1,5 @@
-testSupport.requireLib('sax');
-testSupport.requireLib('sax/base');
+testSupport.lib('sax');
+testSupport.lib('sax/base');
 
 suite('webcals/sax', function() {
 

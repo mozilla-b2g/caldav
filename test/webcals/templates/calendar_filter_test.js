@@ -1,6 +1,6 @@
 requireRequest();
-testSupport.requireLib('templates/calendar_data');
-testSupport.requireLib('templates/calendar_filter');
+testSupport.lib('templates/calendar_data');
+testSupport.lib('templates/calendar_filter');
 
 suite('webcals/templates/calendar_filter', function() {
   var CalendarFilter;
