@@ -72,8 +72,6 @@ suite('webcals/request/propfind', function() {
 
     var result = subject._createPayload();
 
-    console.log(result);
-
     assert.equal(subject._createPayload(), expected);
   });
 

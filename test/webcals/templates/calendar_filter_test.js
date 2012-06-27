@@ -1,7 +1,8 @@
 requireRequest();
 requireLib('templates/calendar_data');
+requireLib('templates/calendar_filter');
 
-suite('webcals/templates/calendar_data', function() {
+suite('webcals/templates/calendar_filter', function() {
   var CalendarFilter;
   var Template;
 
@@ -9,7 +10,7 @@ suite('webcals/templates/calendar_data', function() {
   var template;
 
   function filter() {
-    subject.filter('VEVENT', true);
+    subject.add('VEVENT', true);
   }
 
   suiteSetup(function() {
@@ -44,9 +45,6 @@ suite('webcals/templates/calendar_data', function() {
 
     test('output', function() {
       var output = subject.render(template);
-      console.log();
-      console.log(output)
-      console.log();
       assert.equal(output, expected);
     });
   });

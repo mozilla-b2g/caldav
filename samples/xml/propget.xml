@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<D:multistatus xmlns:D="DAV:">
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
 
   <D:response>
 
@@ -39,6 +39,5 @@
       </D:prop>
     </D:propstat>
   </D:response>
-
 
 </D:multistatus>

@@ -1,6 +1,7 @@
 requireLib('sax');
 requireLib('sax/base');
 requireLib('sax/dav_response');
+requireLib('ical');
 
 suite('webcals/sax/dav_response', function() {
 
@@ -61,6 +62,7 @@ suite('webcals/sax/dav_response', function() {
           value: {}
         }
       }
+
     };
 
     test('output', function(done) {

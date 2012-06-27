@@ -2,11 +2,12 @@ requireRequest();
 requireLib('request/propfind');
 requireLib('request/calendar_query');
 
-suite('webcals/request/propfind', function() {
+suite('webcals/request/calendar_query', function() {
   var Propfind,
-      CalendarData,
       FakeXhr,
+      CalendarData,
       CalendarQuery,
+      CalendarFilter,
       Xhr,
       Template,
       oldXhrClass,
@@ -18,6 +19,7 @@ suite('webcals/request/propfind', function() {
   suiteSetup(function() {
     Propfind = Webcals.require('request/propfind');
     CalendarData = Webcals.require('templates/calendar_data');
+    CalendarFilter = Webcals.require('templates/calendar_filter');
     CalendarQuery = Webcals.require('request/calendar_query');
     SaxResponse = Webcals.require('sax/dav_response');
     FakeXhr = Webcals.require('support/fake_xhr');
@@ -44,13 +46,15 @@ suite('webcals/request/propfind', function() {
     assert.equal(subject.xhr.method, 'REPORT');
 
     assert.instanceOf(subject.fields, CalendarData);
+    assert.instanceOf(subject.filters, CalendarFilter);
   });
 
   test('#_createPayload', function() {
     subject.prop('getetag');
     subject.fields.select('VEVENT', ['NAME']);
+    subject.filters.add('VEVENT', true);
 
-    var tags = [
+    var props = [
       '<N0:getetag />',
       '<N1:calendar-data>',
         '<N1:comp name="VCALENDAR">',
@@ -61,12 +65,19 @@ suite('webcals/request/propfind', function() {
       '</N1:calendar-data>'
     ].join('');
 
+    var filter = [
+      '<N1:comp-filter name="VCALENDAR">',
+        '<N1:comp-filter name="VEVENT" />',
+      '</N1:comp-filter>'
+    ].join('');
+
     var expected = [
       subject.template.doctype,
-      '<N0:calendar-query xmlns:N0="DAV:" ',
+      '<N1:calendar-query xmlns:N0="DAV:" ',
           'xmlns:N1="urn:ietf:params:xml:ns:caldav">',
-        '<N0:prop>', tags, '</N0:prop>',
-      '</N0:calendar-query>'
+        '<N0:prop>', props, '</N0:prop>',
+        '<N1:filter>', filter, '</N1:filter>',
+      '</N1:calendar-query>'
     ].join('');
 
     assert.equal(subject._createPayload(), expected);

@@ -52,11 +52,16 @@ suite('webcals/templates/calendar_data', function() {
       '</N0:calendar-data>'
     ].join('');
 
-    setup(function() {
-      select();
+    test('without items', function() {
+      var output = subject.render(template);
+      assert.equal(
+        output,
+        '<N0:calendar-data />'
+      );
     });
 
     test('output', function() {
+      select();
       var output = subject.render(template);
       assert.equal(output, expected);
     });
