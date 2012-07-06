@@ -34,18 +34,40 @@ var con = new CalDav.Connection({
 });
 
 var Propfind = CalDav.Request.Propfind;
+var CalendarHome = CalDav.Request.CalendarHome;
+
+function getCalendarDetails(caluri) {
+
+  var calFind = findProp(caluri);
+  calFind.prop(['ical', 'calendar-color']);
+  calFind.prop('owner');
+  calFind.prop('displayname');
+  calFind.prop('resourcetype');
+  calFind.prop(['calserver', 'getctag']);
+  calFind.depth = 1;
+
+
+  // found calendar home find calendars.
+  calFind.send(function(err, data) {
+    var url, name;
+
+    for (url in data) {
+      if (data[url].resourcetype.value.indexOf('calendar') !== -1) {
+        name = data[url].displayname.value.value;
+        console.log('CAL RESOURCE:', name, '-', url);
+      }
+    }
+    console.log('DATA:');
+    console.log(JSON.stringify(data));
+  });
+
+}
 
 function findProp(uri) {
   return new Propfind(con, {
     url: uri || config.uri
   });
 }
-
-// Have some url determine where the principal is
-var findCal = findProp();
-findCal.prop('current-user-principal');
-findCal.prop('resourcetype');
-findCal.prop('principal-URL');
 
 function getProp(propName, obj, single) {
   var key, url, level, results = {};
@@ -65,41 +87,11 @@ function getProp(propName, obj, single) {
   return results;
 }
 
-findCal.send(function(err, data) {
+var home = new CalendarHome(con, {
+  url: config.uri
+});
 
-  // found principal find calendar home
-  var principaluri = getProp('current-user-principal', data, true);
-  console.log('PRINCIPAL:', principaluri);
-  var principalFind = findProp(principaluri);
-
-  principalFind.prop('resourcetype');
-  principalFind.prop(['caldav', 'calendar-home-set']);
-
-  principalFind.send(function(err, data) {
-    var caluri = getProp('calendar-home-set', data, true);
-    var calFind = findProp(caluri);
-    console.log('CALENDAR_HOME:', caluri);
-    calFind.prop(['ical', 'calendar-color']);
-    calFind.prop('owner');
-    calFind.prop('displayname');
-    calFind.prop('resourcetype');
-    calFind.prop(['calserver', 'getctag']);
-    calFind.depth = 1;
-
-
-    // found calendar home find calendars.
-    calFind.send(function(err, data) {
-      var url, name;
-
-      for (url in data) {
-        if (data[url].resourcetype.value.indexOf('calendar') !== -1) {
-          name = data[url].displayname.value.value;
-          console.log('CAL RESOURCE:', name, '-', url);
-        }
-      }
-      console.log('DATA:');
-      console.log(JSON.stringify(data));
-    });
-  });
-
+home.send(function(err, data) {
+  console.log('CALENDAR_HOME:', data);
+  getCalendarDetails(data);
 });
