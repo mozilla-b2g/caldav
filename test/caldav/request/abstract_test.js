@@ -40,6 +40,7 @@ suite('caldav/request/abstract.js', function() {
     assert.equal(subject.xhr.url, url);
     assert.equal(subject.configOpt, options.configOpt);
     assert.instanceOf(subject.sax, SAX);
+    assert.equal(subject.xhr.headers['Content-Type'], 'text/xml');
   });
 
   test('xhr password options', function() {
