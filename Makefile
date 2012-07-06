@@ -20,6 +20,7 @@ package: test-agent-config
 	cat $(VENDOR)/sax.js >> $(WEB_FILE)
 	echo ';' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/webcals.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/ical.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
