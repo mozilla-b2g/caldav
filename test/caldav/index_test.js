@@ -5,7 +5,7 @@ if (typeof(window) !== 'undefined') {
 suite('caldav', function() {
   var root;
   var isNode = typeof(window) === 'undefined';
-  
+
   suiteSetup(function() {
     if (isNode) {
       root = require('../../lib/caldav');
@@ -13,14 +13,14 @@ suite('caldav', function() {
       root = Caldav;
     }
   });
-  
+
   suite('browser', function() {
     if (isNode)
       return;
-    
+
     test('sax', function() {
       assert.ok(sax);
-    })
+    });
   });
 
   test('namespaces', function() {

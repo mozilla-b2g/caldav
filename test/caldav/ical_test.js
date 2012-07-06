@@ -5,7 +5,6 @@ suite('caldav/ics', function() {
   var ical;
 
   suiteSetup(function() {
-    console.log(Caldav);
     ical = Caldav.require('ical');
   });
 

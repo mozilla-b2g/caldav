@@ -52,7 +52,7 @@ suite('caldav/sax/dav_response', function() {
 
         'current-user-principal': {
           status: '404',
-          value: {}
+          value: null
         }
       },
 
