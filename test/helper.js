@@ -130,6 +130,7 @@
   requireRequest = function(callback) {
     testSupport.lib('responder');
     testSupport.lib('xhr');
+    testSupport.lib('connection');
     testSupport.lib('sax');
     testSupport.lib('sax/base');
     testSupport.lib('sax/dav_response');

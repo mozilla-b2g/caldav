@@ -8,6 +8,8 @@ suite('caldav/request/calendar_query', function() {
       CalendarData,
       CalendarQuery,
       CalendarFilter,
+      Connection,
+      con,
       Xhr,
       Template,
       oldXhrClass,
@@ -17,11 +19,13 @@ suite('caldav/request/calendar_query', function() {
       subject;
 
   suiteSetup(function() {
+    // this is way to much stuff
     Propfind = Caldav.require('request/propfind');
     CalendarData = Caldav.require('templates/calendar_data');
     CalendarFilter = Caldav.require('templates/calendar_filter');
     CalendarQuery = Caldav.require('request/calendar_query');
     SaxResponse = Caldav.require('sax/dav_response');
+    Connection = Caldav.require('connection');
     FakeXhr = Caldav.require('support/fake_xhr');
     Template = Caldav.require('template');
     Xhr = Caldav.require('xhr');
@@ -35,7 +39,8 @@ suite('caldav/request/calendar_query', function() {
   });
 
   setup(function() {
-    subject = new CalendarQuery(url);
+    con = new Connection();
+    subject = new CalendarQuery(con, { url: url });
     FakeXhr.instances.length = 0;
   });
 

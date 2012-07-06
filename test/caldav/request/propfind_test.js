@@ -5,7 +5,9 @@ suite('caldav/request/propfind', function() {
   var Abstract,
       Propfind,
       FakeXhr,
+      Connection,
       Xhr,
+      con,
       Template,
       oldXhrClass,
       SaxResponse;
@@ -20,6 +22,7 @@ suite('caldav/request/propfind', function() {
     FakeXhr = Caldav.require('support/fake_xhr');
     Template = Caldav.require('template');
     Xhr = Caldav.require('xhr');
+    Connection = Caldav.require('connection');
 
     oldXhrClass = Xhr.prototype.xhrClass;
     Xhr.prototype.xhrClass = FakeXhr;
@@ -30,7 +33,8 @@ suite('caldav/request/propfind', function() {
   });
 
   setup(function() {
-    subject = new Propfind(url);
+    con = new Connection();
+    subject = new Propfind(con, { url: url });
     FakeXhr.instances.length = 0;
   });
 
@@ -53,6 +57,12 @@ suite('caldav/request/propfind', function() {
     subject.prop('test');
 
     assert.deepEqual(subject._props, [expected]);
+  });
+
+  test('.depth', function() {
+    subject.depth = 10;
+    assert.equal(subject.xhr.headers.Depth, 10);
+    assert.equal(subject.depth, 10);
   });
 
   test('#_createPayload', function() {

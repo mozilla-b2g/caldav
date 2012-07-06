@@ -4,11 +4,14 @@ suite('caldav/request/abstract.js', function() {
   var subject;
   var Abstract;
   var Xhr;
+  var Connection;
+  var con;
   var FakeXhr;
   var SAX;
   var oldXhrClass;
   var url = 'http://google.com/';
   var options = {
+    url: url,
     configOpt: true
   };
 
@@ -17,6 +20,7 @@ suite('caldav/request/abstract.js', function() {
     FakeXhr = Caldav.require('support/fake_xhr');
     Xhr = Caldav.require('xhr');
     SAX = Caldav.require('sax');
+    Connection = Caldav.require('connection');
 
     oldXhrClass = Xhr.prototype.xhrClass;
     Xhr.prototype.xhrClass = FakeXhr;
@@ -27,7 +31,11 @@ suite('caldav/request/abstract.js', function() {
   });
 
   setup(function() {
-    subject = new Abstract(url, options);
+    con = new Connection({
+      password: 'password',
+      user: 'user'
+    });
+    subject = new Abstract(con, options);
     FakeXhr.instances.length = 0;
   });
 
@@ -39,14 +47,14 @@ suite('caldav/request/abstract.js', function() {
     assert.instanceOf(subject.xhr, Xhr);
     assert.equal(subject.xhr.url, url);
     assert.equal(subject.configOpt, options.configOpt);
+    assert.equal(subject.connection, con);
     assert.instanceOf(subject.sax, SAX);
     assert.equal(subject.xhr.headers['Content-Type'], 'text/xml');
   });
 
   test('xhr password options', function() {
-    var subject = new Abstract(url, {
-      password: 'password',
-      user: 'user'
+    var subject = new Abstract(con, {
+      url: url
     });
 
     var xhr = subject.xhr;
