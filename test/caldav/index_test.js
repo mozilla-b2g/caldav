@@ -28,6 +28,7 @@ suite('caldav', function() {
     assert.ok(root.Request);
     assert.ok(root.Templates);
     assert.ok(root.Xhr);
+    assert.ok(root.Connection);
   });
 
 });

@@ -1050,6 +1050,7 @@ function write (chunk) {
      * Maps exports to a file path.
      */
     set exports(val) {
+      console.log(paths);
       return paths[this.path] = val;
     },
 
@@ -1250,7 +1251,6 @@ function write (chunk) {
 @namespace
 */
 (function(module, ns) {
-  console.log(ns);
   /**
    * Constructor
    *
@@ -1915,6 +1915,105 @@ function write (chunk) {
 ));
 (function(module, ns) {
 
+  var XHR = ns.require('xhr');
+
+  /**
+   * Connection objects contain
+   * general information to be reused
+   * across XHR requests.
+   *
+   * Also handles normalization of path details.
+   */
+  function Connection(options) {
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    var key;
+
+    for (key in options) {
+      if (options.hasOwnProperty(key)) {
+        this[key] = options[key];
+      }
+    }
+
+    var domain = options.domain;
+
+    if (domain) {
+      if (domain.substr(-1) === '/') {
+        this.domain = domain.substr(0, domain.length - 1);
+      }
+    }
+
+  }
+
+  Connection.prototype = {
+    /**
+     * Default username for requests.
+     */
+    user: '',
+
+    /**
+     * Default passwords for requests.
+     */
+    password: '',
+
+    /**
+     * Default domain for requests.
+     */
+    domain: '',
+
+    /**
+     * Creates new XHR request based on default
+     * options for connection.
+     *
+     * @return {Caldav.Xhr} http request set with default options.
+     */
+    request: function(options) {
+      if (typeof(options) === 'undefined') {
+        options = {};
+      }
+
+      var copy = {};
+      var key;
+      // copy options
+
+      for (key in options) {
+        copy[key] = options[key];
+      }
+
+      if (!copy.user) {
+        copy.user = this.user;
+      }
+
+      if (!copy.password) {
+        copy.password = this.password;
+      }
+
+      if (copy.url && copy.url.indexOf('http') !== 0) {
+        var url = copy.url;
+        if (url.substr(0, 1) !== '/') {
+          url = '/' + url;
+        }
+        copy.url = this.domain + url;
+      }
+
+      return new XHR(copy);
+    }
+
+  };
+
+  console.log('!HIT!!');
+  module.exports = Connection;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('connection'), Caldav] :
+    [module, require('./caldav')]
+));
+(function(module, ns) {
+
   function CalendarData() {
     this._hasItems = false;
     this.struct = {};
@@ -2249,6 +2348,7 @@ function write (chunk) {
       'DAV:/status': HttpStatusHandler,
       'DAV:/resourcetype': ArrayHandler,
       'DAV:/principal-URL': HrefHandler,
+      'DAV:/current-user-principal': HrefHandler,
       'urn:ietf:params:xml:ns:caldav/calendar-data': CalendarDataHandler,
       'DAV:/value': TextHandler,
       'urn:ietf:params:xml:ns:caldav/calendar-home-set': HrefHandler,
@@ -2373,6 +2473,7 @@ function write (chunk) {
     }
 
     this.xhr = new XHR(xhrOptions);
+    this.xhr.headers['Content-Type'] = 'text/xml';
   }
 
   Abstract.prototype = {
@@ -2598,6 +2699,7 @@ function write (chunk) {
   exports.Xhr = ns.require('xhr');
   exports.Request = ns.require('request');
   exports.Templates = ns.require('templates');
+  exports.Connection = ns.require('connection');
 
 }.apply(
   this,

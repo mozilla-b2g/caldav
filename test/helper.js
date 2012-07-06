@@ -1,5 +1,7 @@
 (function() {
 
+  // lazy defined navigator causes global leak warnings...
+
   var requireBak;
   var specialRequires = {
     'chai': requireChai
@@ -13,6 +15,7 @@
   /* stream hack for SAX */
 
   if (!testSupport.isNode) {
+    window.navigator;
     requireBak = require;
 
     require = function require_shim(type) {
