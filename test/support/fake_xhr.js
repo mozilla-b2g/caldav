@@ -41,7 +41,7 @@
 
 }.apply(
   this,
-  (this.Webcals) ?
-    [Webcals('support/fake_xhr'), Webcals] :
-    [module, require('../../lib/webcals/webcals')]
+  (this.Caldav) ?
+    [Caldav('support/fake_xhr'), Caldav] :
+    [module, require('../../lib/caldav/caldav')]
 ));

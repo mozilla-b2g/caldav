@@ -1,7 +1,7 @@
 REPORTER=spec
-WEB_FILE=webcals.js
+WEB_FILE=caldav.js
 VENDOR=./vendor/
-LIB_ROOT=./lib/webcals
+LIB_ROOT=./lib/caldav
 
 .PHONY: package
 package: test-agent-config
@@ -19,7 +19,7 @@ package: test-agent-config
 
 	cat $(VENDOR)/sax.js >> $(WEB_FILE)
 	echo ';' >> $(WEB_FILE)
-	cat $(LIB_ROOT)/webcals.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/ical.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
@@ -50,10 +50,10 @@ test-node:
 		--ui tdd \
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
-		test/webcals/sax/*_test.js \
-		test/webcals/templates/*_test.js \
-		test/webcals/request/*_test.js \
-		test/webcals/*_test.js
+		test/caldav/sax/*_test.js \
+		test/caldav/templates/*_test.js \
+		test/caldav/request/*_test.js \
+		test/caldav/*_test.js
 
 TEST_AGENT_CONFIG=./test-agent/config.json
 .PHONY: test-agent-config

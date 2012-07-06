@@ -4,8 +4,8 @@ var Agent = require('test-agent'),
     Suite = Agent.Suite,
     suite = new Suite({
       path: __dirname,
-      testDir: 'test/webcals/',
-      libDir: 'lib/webcals/',
+      testDir: 'test/caldav/',
+      libDir: 'lib/caldav/',
       testSuffix: '_test.js'
     });
 

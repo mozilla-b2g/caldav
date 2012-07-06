@@ -102,20 +102,20 @@
   };
 
   testSupport.lib = function(lib, callback) {
-     testSupport.require('/lib/webcals/' + lib, callback);
+     testSupport.require('/lib/caldav/' + lib, callback);
   };
 
   testSupport.helper = function(lib) {
     testSupport.require('/test/support/' + lib);
   }
 
-  Webcals = require('../lib/webcals/webcals.js');
+  Caldav = require('../lib/caldav/caldav.js');
 
   if (typeof(window) === 'undefined') {
-    //in node we need to hack Webcals to do the right thing.
-    var oldRequire = Webcals.require;
+    //in node we need to hack Caldav to do the right thing.
+    var oldRequire = Caldav.require;
 
-    Webcals.require = function exportRequireDev(path) {
+    Caldav.require = function exportRequireDev(path) {
       if (path.indexOf('support') === 0) {
         path = __dirname + '/' + path;
         return require(path);
