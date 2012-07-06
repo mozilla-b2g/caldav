@@ -93,5 +93,5 @@ var home = new CalendarHome(con, {
 
 home.send(function(err, data) {
   console.log('CALENDAR_HOME:', data);
-  getCalendarDetails(data);
+  getCalendarDetails(data.url);
 });
