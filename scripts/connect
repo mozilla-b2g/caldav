@@ -41,6 +41,9 @@ function getCalendarDetails(caluri) {
   var calFind = findProp(caluri);
   calFind.prop(['ical', 'calendar-color']);
   calFind.prop('owner');
+  calFind.prop('current-user-privilege-set');
+  calFind.prop(['caldav', 'calendar-description']);
+  calFind.prop(['caldav', 'calendar-timezone']);
   calFind.prop('displayname');
   calFind.prop('resourcetype');
   calFind.prop(['calserver', 'getctag']);
@@ -59,6 +62,8 @@ function getCalendarDetails(caluri) {
     }
     console.log('DATA:');
     console.log(JSON.stringify(data));
+    //console.log('RAW:');
+    //console.log(calFind.xhr.xhr.responseText);
   });
 
 }
