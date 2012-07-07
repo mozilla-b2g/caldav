@@ -131,25 +131,11 @@ suite('caldav/request/propfind', function() {
 
     suite('#send', function() {
 
-      function mockCallback(obj, method) {
-        var calledWith = {};
-        var calls = 0;
-
-        obj[method] = function() {
-          if (calls.length > 1) {
-            throw new Error(method + ' called more then once');
-          }
-
-          calledWith.args = arguments;
-        };
-
-        return calledWith;
-      }
 
       test('success', function() {
         var expected = { url: 'foo.com' };
-        var principal = mockCallback(subject, '_findPrincipal');
-        var home = mockCallback(subject, '_findCalendarHome');
+        var principal = testSupport.mock.method(subject, '_findPrincipal');
+        var home = testSupport.mock.method(subject, '_findCalendarHome');
 
         subject.send(function() {
           err = arguments[0];

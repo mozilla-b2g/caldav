@@ -104,6 +104,45 @@
     });
   };
 
+  testSupport.mock = {
+
+    /**
+     * Mocks out a method
+     *
+     *    var called = testSupport.mock.method(subject, 'myMethod');
+     *
+     *    subject.myMethod('foo', 'bar');
+     *
+     *    called.args[0] === 'foo'; // true
+     *    called.args[1] === 'bar'; // true
+     *
+     *
+     * @return {Object} reference object.
+     */
+    method: function(obj, method, times) {
+      var calledWith = {};
+      var calls = 0;
+
+      if (typeof(times) === 'undefined') {
+        times = 1;
+      }
+
+      obj[method] = function() {
+        if (calls.length > times) {
+          throw new Error(
+            method + ' called more then ' + times + 'time(s)'
+          );
+        }
+
+        calledWith.args = arguments;
+        calls++;
+      };
+
+      return calledWith;
+    }
+
+  };
+
   testSupport.lib = function(lib, callback) {
      testSupport.require('/lib/caldav/' + lib, callback);
   };
