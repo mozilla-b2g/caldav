@@ -1050,7 +1050,6 @@ function write (chunk) {
      * Maps exports to a file path.
      */
     set exports(val) {
-      console.log(paths);
       return paths[this.path] = val;
     },
 
@@ -2003,7 +2002,6 @@ function write (chunk) {
 
   };
 
-  console.log('!HIT!!');
   module.exports = Connection;
 
 }.apply(
@@ -2437,32 +2435,16 @@ function write (chunk) {
   /**
    * Creates an (Web/Cal)Dav request.
    *
-   * @param {String} url location of resource.
+   * @param {Caldav.Connection} connection connection details.
    * @param {Object} options additional options for request.
    */
-  function Abstract(url, options) {
+  function Abstract(connection, options) {
     if (typeof(options) === 'undefined') {
       options = {};
     }
 
     var key;
     var xhrOptions = {};
-
-    if (typeof(url) === 'undefined' || !url) {
-      throw new Error('request requires a url');
-    }
-
-    xhrOptions.url = url;
-
-    if ('password' in options) {
-      xhrOptions.password = options.password;
-      delete options.password;
-    }
-
-    if ('user' in options) {
-      xhrOptions.user = options.user;
-      delete options.user;
-    }
 
     this.sax = new SAX();
 
@@ -2472,8 +2454,16 @@ function write (chunk) {
       }
     }
 
-    this.xhr = new XHR(xhrOptions);
-    this.xhr.headers['Content-Type'] = 'text/xml';
+    if (!connection) {
+      throw new Error('must pass connection object');
+    }
+
+    this.connection = connection;
+
+    this.xhr = this.connection.request({
+      url: this.url,
+      headers: { 'Content-Type': 'text/xml' }
+    });
   }
 
   Abstract.prototype = {
@@ -2543,14 +2533,20 @@ function write (chunk) {
       DavResponse
     );
 
-    this.xhr.headers['Depth'] = this.depth;
+    this.xhr.headers['Depth'] = 0;
     this.xhr.method = 'PROPFIND';
   }
 
   Propfind.prototype = {
     __proto__: Abstract.prototype,
 
-    depth: 0,
+    get depth() {
+      return this.xhr.headers.Depth;
+    },
+
+    set depth(val) {
+      this.xhr.headers.Depth = val;
+    },
 
     /**
      * Adds property to request.
@@ -2601,10 +2597,10 @@ function write (chunk) {
    *
    * Defaults to Depth of 1.
    *
-   * @param {String} url location to make request.
+   * @param {CalDav.Connection} connection connection object.
    * @param {Object} options options for calendar query.
    */
-  function CalendarQuery(url, options) {
+  function CalendarQuery(options) {
     Propfind.apply(this, arguments);
 
     this.xhr.headers['Depth'] = this.depth || 1;
@@ -2652,7 +2648,8 @@ function write (chunk) {
   module.exports = {
     Abstract: ns.require('request/abstract'),
     CalendarQuery: ns.require('request/calendar_query'),
-    Propfind: ns.require('request/propfind')
+    Propfind: ns.require('request/propfind'),
+    CalendarHome: ns.require('request/calendar_home')
   };
 
 }.apply(
