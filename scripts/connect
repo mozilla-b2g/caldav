@@ -35,6 +35,7 @@ var con = new CalDav.Connection({
 
 var Propfind = CalDav.Request.Propfind;
 var CalendarHome = CalDav.Request.CalendarHome;
+var Calendar = CalDav.Resources.Calendar;
 
 function getCalendarDetails(caluri) {
 
@@ -52,16 +53,18 @@ function getCalendarDetails(caluri) {
 
   // found calendar home find calendars.
   calFind.send(function(err, data) {
-    var url, name;
+    var url, name, calendars = {};
 
     for (url in data) {
       if (data[url].resourcetype.value.indexOf('calendar') !== -1) {
-        name = data[url].displayname.value.value;
-        console.log('CAL RESOURCE:', name, '-', url);
+        calendars[url] = new Calendar(con, { url: url });
+        calendars[url].updateFromServer(data[url]);
+
+        console.log('CAL RESOURCE:', calendars[url]);
       }
     }
-    console.log('DATA:');
-    console.log(JSON.stringify(data));
+    //console.log('DATA:');
+    //console.log(JSON.stringify(data));
     //console.log('RAW:');
     //console.log(calFind.xhr.xhr.responseText);
   });
