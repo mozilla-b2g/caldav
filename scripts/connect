@@ -60,30 +60,6 @@ function getCalendarDetails(caluri) {
 
 }
 
-function findProp(uri) {
-  return new Propfind(con, {
-    url: uri || config.uri
-  });
-}
-
-function getProp(propName, obj, single) {
-  var key, url, level, results = {};
-
-  for (url in obj) {
-    level = obj[url];
-    for (key in level) {
-      if (key === propName && level[key].status) {
-        results[url] = level[key].value;
-        if (single) {
-          return results[url];
-        }
-      }
-    }
-  }
-
-  return results;
-}
-
 var home = new CalendarHome(con, {
   url: config.uri
 });
