@@ -1,3 +1,7 @@
+requireRequest();
+
+testSupport.lib('request/calendar_query');
+
 testSupport.lib('resources/calendar'),
 testSupport.lib('xhr');
 testSupport.lib('connection');
@@ -6,6 +10,7 @@ suite('caldav/resources/calendar', function() {
 
   var Calendar;
   var Connection;
+  var CalendarQuery;
   var con;
   var url = 'foobar.com';
   var subject;
@@ -13,6 +18,7 @@ suite('caldav/resources/calendar', function() {
   suiteSetup(function() {
     Calendar = Caldav.require('resources/calendar');
     Connection = Caldav.require('connection');
+    CalendarQuery = Caldav.require('request/calendar_query');
   });
 
   setup(function() {
@@ -26,6 +32,7 @@ suite('caldav/resources/calendar', function() {
 
     test('without calendar data', function() {
       assert.equal(subject.url, url);
+      assert.equal(subject.connection, con);
     });
 
     test('with calendar data', function() {
@@ -40,6 +47,20 @@ suite('caldav/resources/calendar', function() {
       assert.equal(calledWith[0], data);
     });
 
+  });
+
+  suite('#createQuery', function() {
+
+    var result;
+
+    setup(function() {
+      result = subject.createQuery();
+    });
+
+    test('result', function() {
+      assert.instanceOf(result, CalendarQuery);
+      assert.equal(result.url, url);
+    });
   });
 
   suite('#updateFromServer', function() {

@@ -178,6 +178,7 @@
     testSupport.lib('templates/calendar_data');
     testSupport.lib('templates/calendar_filter');
     testSupport.helper('fake_xhr');
+    testSupport.lib('request/propfind');
 
     //in the future we need a callback for browser support.
     if (typeof(callback) !== 'undefined') {

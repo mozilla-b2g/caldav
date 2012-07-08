@@ -92,10 +92,14 @@ suite('caldav/resource_finder', function() {
       });
 
       assert.ok(result.calendar['a']);
-      assert.instanceOf(result.calendar['a'], Handler);
+
+      var cal = result.calendar['a'];
+
+      assert.instanceOf(cal, Handler);
       assert.equal(Object.keys(result.calendar).length, 1);
 
-      assert.equal(result.calendar['a'].args[1].name.value, '1');
+      assert.equal(cal.args[1].name.value, '1');
+      assert.equal(cal.url, 'a');
     });
 
   });
