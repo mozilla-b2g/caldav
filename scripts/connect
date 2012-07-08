@@ -54,7 +54,15 @@ function getCalendarDetails(caluri) {
 
   // found calendar home find calendars.
   resources.send(function(err, data) {
-    console.log(data);
+    var calendars = data.calendar;
+    var cal = calendars[Object.keys(calendars)[0]];
+    console.log(cal);
+    var query = cal.createQuery();
+
+    query.send(function(err, data, xhr) {
+      console.log(query.xhr.data);
+      console.log(err, data);
+    });
   });
 
 }
