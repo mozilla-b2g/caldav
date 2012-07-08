@@ -36,37 +36,26 @@ var con = new CalDav.Connection({
 var Propfind = CalDav.Request.Propfind;
 var CalendarHome = CalDav.Request.CalendarHome;
 var Calendar = CalDav.Resources.Calendar;
+var Resources = CalDav.Request.Resources;
 
 function getCalendarDetails(caluri) {
 
-  var calFind = findProp(caluri);
-  calFind.prop(['ical', 'calendar-color']);
-  calFind.prop('owner');
-  calFind.prop('current-user-privilege-set');
-  calFind.prop(['caldav', 'calendar-description']);
-  calFind.prop(['caldav', 'calendar-timezone']);
-  calFind.prop('displayname');
-  calFind.prop('resourcetype');
-  calFind.prop(['calserver', 'getctag']);
-  calFind.depth = 1;
+  var resources = new Resources(con, {
+    url: caluri
+  });
 
+  resources.addResource('calendar', Calendar);
+
+  resources.prop(['ical', 'calendar-color']);
+  resources.prop(['caldav', 'calendar-description']);
+  resources.prop(['caldav', 'calendar-timezone']);
+  resources.prop('displayname');
+  resources.prop('resourcetype');
+  resources.prop(['calserver', 'getctag']);
 
   // found calendar home find calendars.
-  calFind.send(function(err, data) {
-    var url, name, calendars = {};
-
-    for (url in data) {
-      if (data[url].resourcetype.value.indexOf('calendar') !== -1) {
-        calendars[url] = new Calendar(con, { url: url });
-        calendars[url].updateFromServer(data[url]);
-
-        console.log('CAL RESOURCE:', calendars[url]);
-      }
-    }
-    //console.log('DATA:');
-    //console.log(JSON.stringify(data));
-    //console.log('RAW:');
-    //console.log(calFind.xhr.xhr.responseText);
+  resources.send(function(err, data) {
+    console.log(data);
   });
 
 }

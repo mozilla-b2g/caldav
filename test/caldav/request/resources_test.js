@@ -71,7 +71,7 @@ suite('caldav/resource_finder', function() {
     function resource(name, type) {
       return {
         name: status(name),
-        resourcetype: [type]
+        resourcetype: status([type])
       };
     }
 
