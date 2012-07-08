@@ -33,7 +33,6 @@ var con = new CalDav.Connection({
   password: config.password
 });
 
-var Propfind = CalDav.Request.Propfind;
 var CalendarHome = CalDav.Request.CalendarHome;
 var Calendar = CalDav.Resources.Calendar;
 var Resources = CalDav.Request.Resources;
