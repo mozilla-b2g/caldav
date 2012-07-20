@@ -1837,8 +1837,7 @@ function write (chunk) {
   }
 
   Xhr.prototype = {
-    /** @scope Caldav.Xhr.prototype */
-
+    globalXhrOptions: null,
     xhrClass: Native,
     method: 'GET',
     async: true,
@@ -1875,7 +1874,13 @@ function write (chunk) {
         callback = this.callback;
       }
 
-      xhr = this.xhr = new this.xhrClass();
+      if (this.globalXhrOptions) {
+        xhr = new this.xhrClass(this.globalXhrOptions);
+      } else {
+        xhr = new this.xhrClass();
+      }
+
+      this.xhr = xhr;
 
       if (Xhr.authHack) {
         xhr.open(this.method, this.url, this.async);
@@ -2030,6 +2035,10 @@ function write (chunk) {
      * @param {String} type iCal fieldset (VTODO, VEVENT,...).
      */
     select: function(type, list) {
+      if (typeof(list) === 'undefined') {
+        list = true;
+      }
+
       var struct = this.struct;
       this._hasItems = true;
 
@@ -2083,6 +2092,10 @@ function write (chunk) {
       return output;
     },
 
+    _defaultRender: function(template) {
+      return template.tag(['caldav', this.rootName]);
+    },
+
     /**
      * Renders CalendarData with a template.
      *
@@ -2091,7 +2104,7 @@ function write (chunk) {
      */
     render: function(template) {
       if (!this._hasItems) {
-        return template.tag(['caldav', this.rootName]);
+        return this._defaultRender(template);
       }
 
       var struct = this.struct;
@@ -2130,6 +2143,11 @@ function write (chunk) {
     __proto__: CalendarData.prototype,
 
     add: CalendarData.prototype.select,
+
+    _defaultRender: function(template) {
+      var inner = this._renderFieldset(template, { VCALENDAR: [{ VEVENT: true }] });
+      return template.tag(['caldav', this.rootName], inner);
+    },
 
     compName: 'comp-filter',
     rootName: 'filter'
@@ -2262,11 +2280,6 @@ function write (chunk) {
   var HrefHandler = Base.create({
     name: 'href',
 
-    //don't add text only elements
-    //to the stack as objects
-    onopentag: null,
-    onclosetag: null,
-
     onopentag: function() {
       if (this.currentTag.handler === this.handler) {
         this.stack.push(this.current);
@@ -2309,6 +2322,38 @@ function write (chunk) {
     }
   });
 
+  var PrivilegeSet = Base.create({
+    name: 'PrivilegeSet',
+
+    name: 'href',
+
+    onopentag: function(data) {
+      if (this.currentTag.handler === this.handler) {
+        this.stack.push(this.current);
+        this.current = [];
+      } else {
+        if (data.tagSpec !== 'DAV:/privilege') {
+          this.current.push(data.local);
+        }
+      }
+    },
+
+    onclosetag: function(data) {
+      var current = this.currentTag;
+      var data;
+
+      if (current.handler === this.handler) {
+        data = this.current;
+
+        this.current = this.stack.pop();
+        this.current[current.local] = data;
+      }
+    },
+
+    ontext: null
+
+  });
+
   var ArrayHandler = Base.create({
     name: 'array',
 
@@ -2343,14 +2388,20 @@ function write (chunk) {
 
     handles: {
       'DAV:/href': TextHandler,
+      'http://calendarserver.org/ns//getctag': TextHandler,
       'DAV:/status': HttpStatusHandler,
       'DAV:/resourcetype': ArrayHandler,
+      'DAV:/current-user-privilege-set': PrivilegeSet,
       'DAV:/principal-URL': HrefHandler,
       'DAV:/current-user-principal': HrefHandler,
       'urn:ietf:params:xml:ns:caldav/calendar-data': CalendarDataHandler,
       'DAV:/value': TextHandler,
+      'DAV:/owner': HrefHandler,
+      'DAV:/displayname': TextHandler,
       'urn:ietf:params:xml:ns:caldav/calendar-home-set': HrefHandler,
-      'urn:ietf:params:xml:ns:caldav/calendar-user-address-set': HrefHandler
+      'urn:ietf:params:xml:ns:caldav/calendar-timezone': TextHandler,
+      'http://apple.com/ns/ical//calendar-color': TextHandler,
+      'urn:ietf:params:xml:ns:caldav/calendar-description': TextHandler
     },
 
     onopentag: function(data, handler) {
@@ -2600,7 +2651,7 @@ function write (chunk) {
    * @param {CalDav.Connection} connection connection object.
    * @param {Object} options options for calendar query.
    */
-  function CalendarQuery(options) {
+  function CalendarQuery(connection, options) {
     Propfind.apply(this, arguments);
 
     this.xhr.headers['Depth'] = this.depth || 1;
@@ -2649,7 +2700,8 @@ function write (chunk) {
     Abstract: ns.require('request/abstract'),
     CalendarQuery: ns.require('request/calendar_query'),
     Propfind: ns.require('request/propfind'),
-    CalendarHome: ns.require('request/calendar_home')
+    CalendarHome: ns.require('request/calendar_home'),
+    Resources: ns.require('request/resources')
   };
 
 }.apply(
@@ -2697,6 +2749,7 @@ function write (chunk) {
   exports.Request = ns.require('request');
   exports.Templates = ns.require('templates');
   exports.Connection = ns.require('connection');
+  exports.Resources = ns.require('resources');
 
 }.apply(
   this,
