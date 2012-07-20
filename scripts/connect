@@ -50,6 +50,8 @@ function getCalendarDetails(caluri) {
   resources.prop(['caldav', 'calendar-timezone']);
   resources.prop('displayname');
   resources.prop('resourcetype');
+  resources.prop('getlastmodified');
+  resources.prop('current-user-privilege-set')
   resources.prop(['calserver', 'getctag']);
 
   // found calendar home find calendars.

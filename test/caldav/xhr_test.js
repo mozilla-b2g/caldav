@@ -24,6 +24,29 @@ suite('webacls/xhr', function() {
       assert.equal(subject.method, 'POST');
     });
 
+    suite('with global args', function() {
+      var old;
+      var opts = { system: true };
+
+      setup(function() {
+        var old = Xhr.prototype.globalXhrOptions;
+        Xhr.prototype.globalXhrOptions = opts;
+      });
+
+      teardown(function() {
+        Xhr.prototype.globalXhrOptions = old;
+      });
+
+      test('constructed xhr', function() {
+        var subject = new Xhr({
+          method: 'POST',
+          xhrClass: FakeXhr
+        });
+        subject.send(function() {});
+        assert.ok(subject.xhr);
+        assert.equal(subject.xhr.constructorArgs[0], opts);
+      });
+    });
   });
 
   suite('.abort', function() {

@@ -5,6 +5,7 @@
     this.sendArgs = null;
     this.headers = {};
     this.responseHeaders = {};
+    this.constructorArgs = arguments;
 
     FakeXhr.instances.push(this);
   }
