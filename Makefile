@@ -12,13 +12,14 @@ package: test-agent-config
 	cp ./node_modules/mocha/mocha.js $(VENDOR)
 	cp ./node_modules/mocha/mocha.css $(VENDOR)
 	cp ./node_modules/chai/chai.js $(VENDOR)
-	cp ./node_modules/sax/lib/sax.js $(VENDOR)
+	cp ./lib/sax.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.css $(VENDOR)
 
-
+	echo '/* sax js - LICENSE: https://github.com/isaacs/sax-js/blob/master/LICENSE */' >> $(WEB_FILE)
 	cat $(VENDOR)/sax.js >> $(WEB_FILE)
 	echo ';' >> $(WEB_FILE)
+	echo '/* caldav.js */' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/ical.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
@@ -33,10 +34,16 @@ package: test-agent-config
 	cat $(LIB_ROOT)/request/abstract.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/propfind.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/calendar_query.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/request/calendar_home.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/request/resources.js >> $(WEB_FILE)
 
 	cat $(LIB_ROOT)/request/index.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/index.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/templates/index.js >> $(WEB_FILE)
+
+	cat $(LIB_ROOT)/resources/calendar.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/resources/index.js >> $(WEB_FILE)
+
 	cat $(LIB_ROOT)/index.js >> $(WEB_FILE)
 
 test: test-node test-browser

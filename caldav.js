@@ -1,3 +1,4 @@
+/* sax js - LICENSE: https://github.com/isaacs/sax-js/blob/master/LICENSE */
 // wrapper for non-node envs
 ;(function (sax) {
 
@@ -70,22 +71,6 @@ function SAXParser (strict, opt) {
   // mostly just for error reporting
   parser.position = parser.line = parser.column = 0
   emit(parser, "onready")
-}
-
-if (!Object.create) Object.create = function (o) {
-  function f () { this.__proto__ = o }
-  f.prototype = o
-  return new f
-}
-
-if (!Object.getPrototypeOf) Object.getPrototypeOf = function (o) {
-  return o.__proto__
-}
-
-if (!Object.keys) Object.keys = function (o) {
-  var a = []
-  for (var i in o) if (o.hasOwnProperty(i)) a.push(i)
-  return a
 }
 
 function checkBufferLength (parser) {
@@ -1005,7 +990,9 @@ function write (chunk) {
 }
 
 })(typeof exports === "undefined" ? sax = {} : exports)
+
 ;
+/* caldav.js */
 (function(global, module) {
 
   /**
@@ -1863,6 +1850,18 @@ function write (chunk) {
     },
 
     /**
+     * @param {String} user basic auth user.
+     * @param {String} password basic auth pass.
+     * @return {String} basic auth token.
+     */
+    _credentials: function(user, pass) {
+      // this code should never run in nodejs.
+      return 'Basic ' + window.btoa(
+        user + ':' + pass
+      );
+    },
+
+    /**
      * Sends request to server.
      *
      * @param {Function} callback success/failure handler.
@@ -1882,10 +1881,18 @@ function write (chunk) {
 
       this.xhr = xhr;
 
-      if (Xhr.authHack) {
-        xhr.open(this.method, this.url, this.async);
-      } else {
+      // This hack is in place due to some platform
+      // bug in gecko when using mozSystem xhr
+      // the credentials only seem to work as expected
+      // when constructing them manually.
+      if (!this.globalXhrOptions || !this.globalXhrOptions.mozSystem) {
         xhr.open(this.method, this.url, this.async, this.user, this.password);
+      } else {
+        xhr.open(this.method, this.url, this.async);
+        xhr.setRequestHeader('Authorization', this._credentials(
+          this.user,
+          this.password
+        ));
       }
 
       for (header in this.headers) {
@@ -1893,7 +1900,6 @@ function write (chunk) {
           xhr.setRequestHeader(header, this.headers[header]);
         }
       }
-
 
       xhr.onreadystatechange = function onReadyStateChange() {
         var data;
@@ -2696,6 +2702,209 @@ function write (chunk) {
 ));
 (function(module, ns) {
 
+  /**
+   * Creates a propfind request.
+   *
+   * @param {Caldav.Connection} connection connection details.
+   * @param {Object} options options for propfind.
+   */
+  function CalendarHome(connection, options) {
+    var key;
+
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    for (key in options) {
+      if (options.hasOwnProperty(key)) {
+        this[key] = options[key];
+      }
+    }
+
+    this.connection = connection;
+  }
+
+  function findProperty(name, data, single) {
+    var url, results = [], prop;
+
+    for (url in data) {
+      if (data.hasOwnProperty(url)) {
+        if (name in data[url]) {
+          prop = data[url][name];
+          if (prop.status === '200') {
+            results.push(data[url][name].value);
+          }
+        }
+      }
+    }
+
+    if (!results.length)
+      return false;
+
+    if (typeof(single) !== 'undefined' && single) {
+      return results[0];
+    }
+
+    return results;
+  }
+
+  CalendarHome.prototype = {
+
+    Propfind: ns.require('request/propfind'),
+
+    _findPrincipal: function(url, callback) {
+      var find = new this.Propfind(this.connection, {
+        url: url
+      });
+
+      find.prop('current-user-principal');
+      find.prop('principal-URL');
+
+      find.send(function(err, data) {
+        var principal;
+
+        if (err) {
+          return callback(err);
+        }
+
+        principal = findProperty('current-user-principal', data, true);
+
+        if (!principal) {
+          principal = findProperty('principal-URL', data, true);
+        }
+
+        callback(null, principal);
+      });
+    },
+
+    _findCalendarHome: function(url, callback) {
+      var details = {};
+      var find = new this.Propfind(this.connection, {
+        url: url
+      });
+
+      find.prop(['caldav', 'calendar-home-set']);
+
+      find.send(function(err, data) {
+        if (err) {
+          return callback(err);
+        }
+
+        details = {
+          url: findProperty('calendar-home-set', data, true)
+        };
+
+        callback(null, details);
+      });
+    },
+
+    /**
+     * Starts request to find calendar home url
+     *
+     * @param {Function} callback node style where second argument
+     *                            are the details of the home calendar.
+     */
+    send: function(callback) {
+      var self = this;
+      self._findPrincipal(self.url, function(err, url) {
+
+        if (!url) {
+          return callback(new Error('Cannot resolve principal url'));
+        }
+
+        self._findCalendarHome(url, function(err, details) {
+          callback(err, details);
+        });
+      });
+    }
+
+  };
+
+  module.exports = CalendarHome;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('request/calendar_home'), Caldav] :
+    [module, require('../caldav')]
+));
+(function(module, ns) {
+
+  var Propfind = ns.require('request/propfind');
+
+  function Resources(connection, options) {
+    Propfind.apply(this, arguments);
+
+    this._resources = {};
+    this.depth = 1;
+  }
+
+  Resources.prototype = {
+    __proto__: Propfind.prototype,
+
+    addResource: function(name, handler) {
+      this._resources[name] = handler;
+    },
+
+    _processResult: function(req, callback) {
+      var results = {};
+      var url;
+      var root;
+      var collection;
+      var self = this;
+      var resources;
+
+      if ('multistatus' in this.sax.root) {
+        root = this.sax.root.multistatus;
+
+        for (url in root) {
+          collection = root[url];
+
+          resources = collection.resourcetype;
+
+          if (resources.value.forEach) {
+
+            resources.value.forEach(function(type) {
+              if (type in self._resources) {
+
+                if (!(type in results)) {
+                  results[type] = {};
+                }
+
+                results[type][url] = new self._resources[type](
+                  self.connection,
+                  collection
+                );
+
+                results[type][url].url = url;
+              }
+            });
+          }
+        }
+
+        callback(null, results, req);
+
+      } else {
+        //XXX: Improve error handling
+        callback(
+          new Error('unexpected xml result'),
+          this.sax.root, req
+        );
+      }
+    }
+
+  };
+
+  module.exports = Resources;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('request/resources'), Caldav] :
+    [module, require('../caldav')]
+));
+(function(module, ns) {
+
   module.exports = {
     Abstract: ns.require('request/abstract'),
     CalendarQuery: ns.require('request/calendar_query'),
@@ -2737,6 +2946,178 @@ function write (chunk) {
     [Caldav('templates'), Caldav] :
     [module, require('../caldav')]
 ));
+/**
+@namespace
+*/
+(function(module, ns) {
+
+  var CalendarQuery = ns.require('request/calendar_query');
+
+  /**
+   * Represents a (Web/Cal)Dav resource type.
+   *
+   * @param {Caldav.Connection} connection connection details.
+   * @param {Object} options public options on prototype.
+   */
+  function Calendar(connection, options) {
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    if (options.url) {
+      this.url = options.url;
+    }
+
+    this.connection = connection;
+    this.updateFromServer(options);
+  }
+
+  Calendar.prototype = {
+
+    _map: {
+      'displayname': 'name',
+
+      'calendar-color': 'color',
+
+      'calendar-description': 'description',
+
+      'getctag': 'ctag',
+      'getlastmodified': 'lastmodified',
+
+      'resourcetype': {
+        field: 'resourcetype',
+        defaults: []
+      },
+
+      'current-user-privilege-set': {
+        field: 'privilegeSet',
+        defaults: []
+      }
+
+    },
+
+    /**
+     * location of calendar resource
+     */
+    url: null,
+
+    /**
+     * displayname as defined by webdav spec
+     * Maps to: displayname
+     */
+    name: null,
+
+    /**
+     * color of calendar as defined by ical spec
+     * Maps to: calendar-color
+     */
+    color: null,
+
+    /**
+     * description of calendar as described by caldav spec
+     * Maps to: calendar-description
+     */
+    description: null,
+
+    /**
+     * change tag (as defined by calendarserver spec)
+     * used to determine if a change has occurred to this
+     * calendar resource.
+     *
+     * Maps to: getctag
+     */
+    ctag: null,
+
+    /**
+     * Resource types of this resource will
+     * always contain 'calendar'
+     *
+     * Maps to: resourcetype
+     *
+     * @type Array
+     */
+    resourcetype: null,
+
+    /**
+     * Set of privileges available to the user.
+     *
+     * Maps to: current-user-privilege-set
+     */
+    privilegeSet: null,
+
+    /**
+     * Updates calendar details from server.
+     */
+    updateFromServer: function(options) {
+      var key;
+      var defaultTo;
+      var mapName;
+      var value;
+      var descriptor;
+
+      if (typeof(options) === 'undefined') {
+        options = {};
+      }
+
+      for (key in options) {
+        if (options.hasOwnProperty(key)) {
+          if (key in this._map) {
+            descriptor = this._map[key];
+            value = options[key];
+
+            if (typeof(descriptor) === 'object') {
+              defaultTo = descriptor.defaults;
+              mapName = descriptor.field;
+            } else {
+              defaultTo = '';
+              mapName = descriptor;
+            }
+
+            if (value.status !== '200') {
+              this[mapName] = defaultTo;
+            } else {
+              this[mapName] = value.value;
+            }
+
+          }
+        }
+      }
+    },
+
+    /**
+     * Creates a query request for this calendar resource.
+     *
+     * @return {CalDav.Request.CalendarQuery} query object.
+     */
+    createQuery: function() {
+      return new CalendarQuery(this.connection, {
+        url: this.url
+      });
+    }
+
+  };
+
+  module.exports = Calendar;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('resources/calendar'), Caldav] :
+    [module, require('../caldav')]
+));
+(function(module, ns) {
+
+  module.exports = {
+    Calendar: ns.require('resources/calendar')
+  };
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('resources'), Caldav] :
+    [module, require('../caldav')]
+));
+
 (function(module, ns) {
 
   var exports = module.exports;

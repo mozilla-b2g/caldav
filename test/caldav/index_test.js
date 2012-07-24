@@ -29,6 +29,8 @@ suite('caldav', function() {
     assert.ok(root.Templates);
     assert.ok(root.Xhr);
     assert.ok(root.Connection);
+    assert.ok(root.Resources);
+    assert.ok(root.Resources.Calendar);
   });
 
 });
