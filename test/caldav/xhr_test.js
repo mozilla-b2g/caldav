@@ -49,6 +49,21 @@ suite('webacls/xhr', function() {
     });
   });
 
+  test('#_credentials', function() {
+    // don't run this in node
+    if (typeof(window) === 'undefined') {
+      return;
+    }
+
+    var user = 'james';
+    var password = 'lal';
+    var expected = 'Basic ' + window.btoa(user + ':' + password);
+
+    assert.equal(
+      subject._credentials(user, password), expected
+    );
+  });
+
   suite('.abort', function() {
     suite('when there is an xhr object', function() {
       var aborted;
@@ -119,6 +134,34 @@ suite('webacls/xhr', function() {
 
     setup(function() {
       responseXhr = null;
+    });
+
+    test('with mozSystem', function() {
+      var user = 'user';
+      var password = 'pass';
+      var url = '/foo';
+
+      request({
+        globalXhrOptions: { mozSystem: true },
+        user: user,
+        password: password,
+        method: 'GET',
+        url: url
+      });
+
+
+      subject.send(function() {});
+      var args = subject.xhr.openArgs;
+
+      assert.deepEqual(
+        args,
+        ['GET', url, true]
+      );
+
+      assert.equal(
+        subject.xhr.headers['Authorization'],
+        subject._credentials(user, password)
+      );
     });
 
     suite('when xhr is a success and responds /w data', function() {
