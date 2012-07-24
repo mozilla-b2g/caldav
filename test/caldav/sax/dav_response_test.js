@@ -1,8 +1,8 @@
 testSupport.lib('responder');
 testSupport.lib('sax');
 testSupport.lib('sax/base');
-testSupport.lib('sax/dav_response');
 testSupport.lib('ical');
+testSupport.lib('sax/dav_response');
 
 suite('caldav/sax/dav_response', function() {
 
@@ -28,7 +28,30 @@ suite('caldav/sax/dav_response', function() {
     subject.registerHandler('DAV:/response', Response);
   });
 
-  suite('parsing', function() {
+  suite('calendar-query', function() {
+    var xml;
+
+    testSupport.defineSample('xml/calendar_query_single.xml', function(data) {
+      xml = data;
+    });
+
+    test('result', function(done) {
+      subject.once('complete', function(data) {
+        var response = data.multistatus;
+        var event = response['event.ics'];
+        assert.ok(event);
+
+        console.log(event);
+        assert.ok(event['calendar-data'].value);
+        assert.ok(event['calendar-data'].value.vevent);
+        done();
+      });
+
+      subject.write(xml).close();
+    });
+  });
+
+  suite('propget', function() {
     var xml;
 
     testSupport.defineSample('xml/propget.xml', function(data) {
