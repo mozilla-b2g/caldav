@@ -3,6 +3,7 @@ testSupport.lib('sax');
 testSupport.lib('sax/base');
 testSupport.lib('ical');
 testSupport.lib('sax/dav_response');
+require('/lib/ical.js');
 
 suite('caldav/sax/dav_response', function() {
 
@@ -41,9 +42,8 @@ suite('caldav/sax/dav_response', function() {
         var event = response['event.ics'];
         assert.ok(event);
 
-        console.log(event);
-        assert.ok(event['calendar-data'].value);
-        assert.ok(event['calendar-data'].value.vevent);
+        assert.ok(event['calendar-data'].value.name, 'name');
+        assert.ok(event['calendar-data'].value.value, 'value');
         done();
       });
 

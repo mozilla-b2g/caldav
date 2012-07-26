@@ -1,4 +1,4 @@
-testSupport.lib('ical'),
+require('/lib/ical.js');
 
 suite('caldav/ics', function() {
 
@@ -12,23 +12,19 @@ suite('caldav/ics', function() {
     });
   });
 
-  suiteSetup(function() {
-    ical = Caldav.require('ical');
-  });
-
   test('intiailizer', function() {
-    assert.ok(ical);
+    assert.ok(ICAL);
   });
 
   suite('VEVENT', function() {
     var result;
 
     setup(function() {
-      result = ical(samples.event);
+      result = ICAL.parse(samples.event);
     });
 
     test('parse', function() {
-      assert.ok(result.vevent);
+      assert.equal(result.name, 'VCALENDAR');
     });
 
   });

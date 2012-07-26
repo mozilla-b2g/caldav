@@ -16,10 +16,13 @@ package: test-agent-config
 	cp ./node_modules/test-agent/test-agent.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.css $(VENDOR)
 
+	echo '/* ical.js - https://github.com/kewisch/ical.js */' >> $(WEB_FILE);
+	echo '' >> $(WEB_FILE);
+	cat ./lib/ical.js >> $(WEB_FILE);
 	echo '/* sax js - LICENSE: https://github.com/isaacs/sax-js/blob/master/LICENSE */' >> $(WEB_FILE)
-	cat $(VENDOR)/sax.js >> $(WEB_FILE)
+	cat $(VENDOR)/sax.js >> $(WEB_FILE);
 	echo ';' >> $(WEB_FILE)
-	echo '/* caldav.js */' >> $(WEB_FILE)
+	echo '/* caldav.js - https://github.com/mozilla-b2g/caldav */' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/ical.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
