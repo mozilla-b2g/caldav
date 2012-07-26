@@ -6848,6 +6848,11 @@ function write (chunk) {
       var parent;
 
       if (this.current.href) {
+        this.emit(
+          'DAV:/response',
+          this.current.href,
+          this.current.propstat
+        );
         parent = this.stack[this.stack.length - 1];
         parent[this.current.href] = this.current.propstat;
       }

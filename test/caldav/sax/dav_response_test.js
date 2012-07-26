@@ -90,12 +90,38 @@ suite('caldav/sax/dav_response', function() {
     };
 
     test('output', function(done) {
+      var response = [];
+
+      subject.on('DAV:/response', function(url, data) {
+        response.push([url, data]);
+      });
+
+
       subject.once('complete', function(data) {
         assert.deepEqual(
           data.multistatus, expected,
           "expected \n '" + JSON.stringify(data.multistatus) +
           "'\n to equal \n '" + JSON.stringify(expected) + '\n"'
         );
+
+        assert.deepEqual(
+          [
+            '/calendar/user/',
+            expected['/calendar/user/']
+          ],
+          response[0],
+          '/calendar/user/ response'
+        );
+
+        assert.deepEqual(
+          [
+            '/calendar/other',
+            expected['/calendar/other']
+          ],
+          response[1],
+          '/calendar/other/ response'
+        );
+
         done();
       });
       subject.write(xml).close();
