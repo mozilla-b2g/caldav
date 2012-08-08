@@ -5911,7 +5911,7 @@ function write (chunk) {
 
       if (typeof(callback) === 'undefined' && typeof(type) === 'object') {
         for (event in type) {
-          if (type.hasOwnProperty(event)) {
+          if (Object.hasOwnProperty.call(type, event)) {
             this.addEventListener(event, type[event]);
           }
         }
@@ -6403,7 +6403,7 @@ function write (chunk) {
     }
 
     for (key in options) {
-      if (options.hasOwnProperty(key)) {
+      if (Object.hasOwnProperty.call(options, key)) {
         this[key] = options[key];
       }
     }
@@ -6482,7 +6482,7 @@ function write (chunk) {
       }
 
       for (header in this.headers) {
-        if (this.headers.hasOwnProperty(header)) {
+        if (Object.hasOwnProperty.call(this.headers, header)) {
           xhr.setRequestHeader(header, this.headers[header]);
         }
       }
@@ -6528,7 +6528,7 @@ function write (chunk) {
     var key;
 
     for (key in options) {
-      if (options.hasOwnProperty(key)) {
+      if (Object.hasOwnProperty.call(options, key)) {
         this[key] = options[key];
       }
     }
@@ -6777,7 +6777,7 @@ function write (chunk) {
       child._super = this;
 
       for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.hasOwnProperty.call(obj, key)) {
           child[key] = obj[key];
         }
       }
@@ -7021,7 +7021,7 @@ function write (chunk) {
       delete this.current.prop;
 
       for (key in props) {
-        if (props.hasOwnProperty(key)) {
+        if (Object.hasOwnProperty.call(props, key)) {
           propstat[key] = {
             status: status,
             value: props[key]
@@ -7095,7 +7095,7 @@ function write (chunk) {
     this.sax = new SAX();
 
     for (key in options) {
-      if (options.hasOwnProperty(key)) {
+      if (Object.hasOwnProperty.call(options, key)) {
         this[key] = options[key];
       }
     }
@@ -7305,7 +7305,7 @@ function write (chunk) {
     }
 
     for (key in options) {
-      if (options.hasOwnProperty(key)) {
+      if (Object.hasOwnProperty.call(options, key)) {
         this[key] = options[key];
       }
     }
@@ -7317,7 +7317,7 @@ function write (chunk) {
     var url, results = [], prop;
 
     for (url in data) {
-      if (data.hasOwnProperty(url)) {
+      if (Object.hasOwnProperty.call(data, url)) {
         if (name in data[url]) {
           prop = data[url][name];
           if (prop.status === '200') {
@@ -7574,6 +7574,7 @@ function write (chunk) {
       'calendar-description': 'description',
 
       'getctag': 'ctag',
+      'getetag': 'etag',
       'getlastmodified': 'lastmodified',
 
       'resourcetype': {
@@ -7652,7 +7653,7 @@ function write (chunk) {
       }
 
       for (key in options) {
-        if (options.hasOwnProperty(key)) {
+        if (Object.hasOwnProperty.call(options, key)) {
           if (key in this._map) {
             descriptor = this._map[key];
             value = options[key];
