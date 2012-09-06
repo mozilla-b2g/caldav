@@ -137,6 +137,9 @@ suite('webacls/xhr', function() {
     });
 
     test('with mozSystem', function() {
+      if (typeof(window) === 'undefined')
+        return;
+
       var user = 'user';
       var password = 'pass';
       var url = '/foo';

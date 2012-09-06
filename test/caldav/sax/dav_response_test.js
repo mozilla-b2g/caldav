@@ -3,7 +3,7 @@ testSupport.lib('sax');
 testSupport.lib('sax/base');
 testSupport.lib('ical');
 testSupport.lib('sax/dav_response');
-require('/lib/ical.js');
+testSupport.lib('../ical');
 
 suite('caldav/sax/dav_response', function() {
 

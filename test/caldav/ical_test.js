@@ -1,4 +1,4 @@
-require('/lib/ical.js');
+testSupport.lib('../ical');
 
 suite('caldav/ics', function() {
 
