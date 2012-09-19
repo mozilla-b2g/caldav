@@ -1,20 +1,18 @@
+testSupport.helper('ical');
 testSupport.lib('responder');
 testSupport.lib('sax');
 testSupport.lib('sax/base');
-testSupport.lib('ical');
+testSupport.lib('sax/calendar_data_handler');
 testSupport.lib('sax/dav_response');
-testSupport.lib('../ical');
 
 suite('caldav/sax/dav_response', function() {
 
-  var data,
-      subject,
-      parser,
-      Parse,
-      Response,
-      Base,
-      handler;
+  var Parse;
+  var Response;
+  var Base;
+  var CalendarDataHandler;
 
+  var originalHandler;
 
   suiteSetup(function() {
     Parse = Caldav.require('sax');
@@ -22,11 +20,35 @@ suite('caldav/sax/dav_response', function() {
     Response = Caldav.require('sax/dav_response');
   });
 
+  var subject;
+  var data;
+  var handler;
+  var parser;
+
   setup(function() {
     //we omit the option to pass base parser
     //because we are the base parser
     subject = new Parse();
     subject.registerHandler('DAV:/response', Response);
+
+    // HACK to get CalendarDataHandler
+    var handleNS = 'urn:ietf:params:xml:ns:caldav/calendar-data';
+
+    CalendarDataHandler = subject.handles['DAV:/response'];
+    CalendarDataHandler = CalendarDataHandler.handles['DAV:/propstat'];
+    CalendarDataHandler = CalendarDataHandler.handles[handleNS];
+
+    if (!originalHandler) {
+      originalHandler = CalendarDataHandler.parseICAL;
+    }
+
+    // XXX: this may change later if ICAL is no longer
+    //      exposed directly.
+    CalendarDataHandler.parseICAL = ICAL.parse;
+  });
+
+  teardown(function() {
+    CalendarDataHandler.parseICAL = originalHandler;
   });
 
   suite('calendar-query', function() {

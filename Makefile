@@ -16,15 +16,11 @@ package: test-agent-config
 	cp ./node_modules/test-agent/test-agent.js $(VENDOR)
 	cp ./node_modules/test-agent/test-agent.css $(VENDOR)
 
-	echo '/* ical.js - https://github.com/kewisch/ical.js */' >> $(WEB_FILE);
-	echo '' >> $(WEB_FILE);
-	cat ./lib/ical.js >> $(WEB_FILE);
 	echo '/* sax js - LICENSE: https://github.com/isaacs/sax-js/blob/master/LICENSE */' >> $(WEB_FILE)
 	cat $(VENDOR)/sax.js >> $(WEB_FILE);
 	echo ';' >> $(WEB_FILE)
 	echo '/* caldav.js - https://github.com/mozilla-b2g/caldav */' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
-	cat $(LIB_ROOT)/ical.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
@@ -33,6 +29,7 @@ package: test-agent-config
 	cat $(LIB_ROOT)/templates/calendar_data.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/templates/calendar_filter.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/base.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/dav_response.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/abstract.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/propfind.js >> $(WEB_FILE)

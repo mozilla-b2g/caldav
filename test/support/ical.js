@@ -295,7 +295,7 @@ ICAL.helpers = {
       var match = parser.expectRE(aState, /^X-/, error);
 
       // Vendor ID
-      if (match = parser.expectOptionalRE(aState, /^([A-Za-z0-9]+-)/, error)) {
+      if ((match = parser.expectOptionalRE(aState, /^([A-Za-z0-9]+-)/, error))) {
         value += match[1];
       }
 
@@ -1450,7 +1450,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -1737,7 +1737,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -1925,7 +1925,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -2142,7 +2142,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -2193,7 +2193,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -2325,7 +2325,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -2692,7 +2692,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -3413,7 +3413,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
@@ -3559,6 +3559,7 @@ ICAL.design = {
       } catch (e) {
         ICAL.helpers.dumpn("EICALPROP: " + this.toString() + "//" + e);
         ICAL.helpers.dumpn(e.stack);
+        return null;
       }
 
       return null;
@@ -4566,7 +4567,7 @@ ICAL.design = {
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  * Portions Copyright (C) Philipp Kewisch, 2011-2012 */
 
-"use strict";
+
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 
