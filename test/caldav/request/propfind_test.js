@@ -51,12 +51,15 @@ suite('caldav/request/propfind', function() {
     assert.equal(subject.xhr.method, 'PROPFIND');
   });
 
-  test('#prop', function() {
+  test('#(has|remove)prop', function() {
     var expected = subject.template.tag('test');
 
     subject.prop('test');
 
     assert.deepEqual(subject._props, [expected]);
+    assert.isTrue(subject.hasProp('test'), 'has prop');
+    subject.removeProp('test');
+    assert.isFalse(subject.hasProp('test'), 'removed prop');
   });
 
   test('.depth', function() {
