@@ -1472,9 +1472,6 @@ function write (chunk) {
       //add to stackData
       stackData.tagSpec = data.tagSpec;
 
-      // shortcut to the current tag object
-      this.currentTag = stackData;
-
       //determine if we need to switch to another
       //handler object.
       handle = this.getHandler(data.tagSpec);
@@ -2520,6 +2517,37 @@ function write (chunk) {
      */
     prop: function(tagDesc, attr, content) {
       this._props.push(this.template.tag(tagDesc, attr, content));
+    },
+
+    /**
+     * Removes property from request.
+     * Must use same arguments as 'prop' to remove prop.
+     *
+     * @param {String|Array} tagDesc tag description.
+     * @param {Object} [attr] optional tag attrs.
+     * @param {Obj} [content] optional content.
+     */
+    removeProp: function(tagDesc, attr, content) {
+      var prop = this.template.tag(tagDesc, attr, content);
+      var idx = this._props.indexOf(prop);
+
+      if (idx !== -1) {
+        this._props.splice(idx, 1);
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * Checks if prop has been added to the request.
+     *
+     * @param {String|Array} tagDesc tag description.
+     * @param {Object} [attr] optional tag attrs.
+     * @param {Obj} [content] optional content.
+     */
+    hasProp: function(tagDesc, attr, content) {
+      var prop = this.template.tag(tagDesc, attr, content);
+      return this._props.indexOf(prop) !== -1;
     },
 
     _createPayload: function() {
