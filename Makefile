@@ -32,6 +32,7 @@ package: test-agent-config
 	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/dav_response.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/abstract.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/request/asset.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/propfind.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/calendar_query.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/calendar_home.js >> $(WEB_FILE)
