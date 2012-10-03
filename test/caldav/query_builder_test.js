@@ -20,6 +20,28 @@ suite('caldav/query_builder', function() {
     template = new Template('container');
   });
 
+  suite('Node', function() {
+    var builder;
+
+    setup(function() {
+      builder = new Builder({ template: template });
+    });
+
+    test('export', function() {
+      assert.ok(Builder.Node);
+    });
+
+    test('#appendString', function() {
+      var subject = new Builder.Node(builder, 'foo');
+      subject.appendString('<a></a>');
+      var out = subject.toString();
+      assert.equal(
+        out,
+        '<N0:comp name="foo"><a></a></N0:comp>'
+      );
+    });
+  });
+
   test('no template given', function() {
     assert.throws(function() {
       new Builder();
