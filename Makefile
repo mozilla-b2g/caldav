@@ -24,10 +24,9 @@ package: test-agent-config
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/query_builder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/xhr.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/connection.js >> $(WEB_FILE)
-	cat $(LIB_ROOT)/templates/calendar_data.js >> $(WEB_FILE)
-	cat $(LIB_ROOT)/templates/calendar_filter.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/base.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/dav_response.js >> $(WEB_FILE)
@@ -40,7 +39,6 @@ package: test-agent-config
 
 	cat $(LIB_ROOT)/request/index.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/index.js >> $(WEB_FILE)
-	cat $(LIB_ROOT)/templates/index.js >> $(WEB_FILE)
 
 	cat $(LIB_ROOT)/resources/calendar.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/resources/index.js >> $(WEB_FILE)

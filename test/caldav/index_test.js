@@ -24,13 +24,13 @@ suite('caldav', function() {
   });
 
   test('namespaces', function() {
-    assert.ok(root);
-    assert.ok(root.Request);
-    assert.ok(root.Templates);
-    assert.ok(root.Xhr);
-    assert.ok(root.Connection);
-    assert.ok(root.Resources);
-    assert.ok(root.Resources.Calendar);
+    assert.ok(root, 'Caldav');
+    assert.ok(root.Request, 'Caldav.Request');
+    assert.ok(root.QueryBuilder, 'Caldav.QueryBuilder');
+    assert.ok(root.Xhr, 'Caldav.Xhr');
+    assert.ok(root.Connection, 'Caldav.Connection');
+    assert.ok(root.Resources, 'Caldav.Resources');
+    assert.ok(root.Resources.Calendar, 'Calendar.Resources.Calendar');
   });
 
 });

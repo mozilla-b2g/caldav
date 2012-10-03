@@ -1,13 +1,13 @@
 requireRequest();
+testSupport.lib('query_builder');
 testSupport.lib('request/propfind');
 testSupport.lib('request/calendar_query');
 
 suite('caldav/request/calendar_query', function() {
   var Propfind,
       FakeXhr,
-      CalendarData,
+      Builder,
       CalendarQuery,
-      CalendarFilter,
       Connection,
       con,
       Xhr,
@@ -21,8 +21,7 @@ suite('caldav/request/calendar_query', function() {
   suiteSetup(function() {
     // this is way to much stuff
     Propfind = Caldav.require('request/propfind');
-    CalendarData = Caldav.require('templates/calendar_data');
-    CalendarFilter = Caldav.require('templates/calendar_filter');
+    Builder = Caldav.require('query_builder');
     CalendarQuery = Caldav.require('request/calendar_query');
     SaxResponse = Caldav.require('sax/dav_response');
     Connection = Caldav.require('connection');
@@ -50,15 +49,21 @@ suite('caldav/request/calendar_query', function() {
     assert.equal(subject.xhr.headers['Depth'], 1);
     assert.equal(subject.xhr.method, 'REPORT');
 
-    assert.instanceOf(subject.fields, CalendarData);
-    assert.instanceOf(subject.filters, CalendarFilter);
+    assert.instanceOf(subject.data, Builder);
+    assert.instanceOf(subject.filter, Builder);
   });
 
   test('#_createPayload', function() {
     subject.prop('getetag');
-    subject.fields.select('VEVENT', ['NAME']);
-    subject.filters.add('VEVENT', true);
 
+    var cal = subject.data.
+                      setComp('VCALENDAR').
+                      comp('VEVENT').
+                      prop('NAME');
+
+    var filter = subject.filter.
+                         setComp('VCALENDAR').
+                         comp('VEVENT');
     var props = [
       '<N0:getetag />',
       '<N1:calendar-data>',
@@ -89,7 +94,6 @@ suite('caldav/request/calendar_query', function() {
   });
 
   suite('integration', function() {
-    return;
     var xml,
         data,
         result,
