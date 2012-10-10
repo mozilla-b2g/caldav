@@ -175,8 +175,6 @@
     testSupport.lib('sax/dav_response');
     testSupport.lib('request/abstract');
     testSupport.lib('template');
-    testSupport.lib('templates/calendar_data');
-    testSupport.lib('templates/calendar_filter');
     testSupport.helper('fake_xhr');
     testSupport.lib('request/propfind');
 

@@ -29,6 +29,66 @@ ICAL.helpers = {
     };
   },
 
+  /**
+   * Creates or returns a class instance
+   * of a given type with the initialization
+   * data if the data is not already an instance
+   * of the given type.
+   *
+   *
+   * Example:
+   *
+   *    var time = new ICAL.icaltime(...);
+   *    var result = ICAL.helpers.formatClassType(time, ICAL.icaltime);
+   *
+   *    (result instanceof ICAL.icaltime)
+   *    // => true
+   *
+   *    result = ICAL.helpers.formatClassType({}, ICAL.icaltime);
+   *    (result isntanceof ICAL.icaltime)
+   *    // => true
+   *
+   *
+   * @param {Object} data object initialization data.
+   * @param {Object} type object type (like ICAL.icaltime).
+   */
+  formatClassType: function formatClassType(data, type) {
+    if (typeof(data) === 'undefined')
+      return undefined;
+
+    if (data instanceof type) {
+      return data;
+    }
+    return new type(data);
+  },
+
+  binsearchInsert: function(list, seekVal, cmpfunc) {
+    if (!list.length)
+      return 0;
+
+    var low = 0, high = list.length - 1,
+        mid, cmpval;
+
+    while (low <= high) {
+      mid = low + Math.floor((high - low) / 2);
+      cmpval = cmpfunc(seekVal, list[mid]);
+
+      if (cmpval < 0)
+        high = mid - 1;
+      else if (cmpval > 0)
+        low = mid + 1;
+      else
+        break;
+    }
+
+    if (cmpval < 0)
+      return mid; // insertion is displacing, so use mid outright.
+    else if (cmpval > 0)
+      return mid + 1;
+    else
+      return mid;
+  },
+
   dumpn: function() {
     if (!ICAL.debug) {
       return null;
@@ -77,7 +137,7 @@ ICAL.helpers = {
       var result = {};
       for (var name in aSrc) {
         if (aSrc.hasOwnProperty(name)) {
-          dump("Cloning " + name + "\n");
+          this.dumpn("Cloning " + name + "\n");
           if (aDeep) {
             result[name] = ICAL.helpers.clone(aSrc[name], true);
           } else {
@@ -253,8 +313,11 @@ ICAL.helpers = {
     constructor: ParserError
   };
 
-  var parser = {};
+  var parser = {
+    Error: ParserError
+  };
   ICAL.icalparser = parser;
+
 
   parser.lexContentLine = function lexContentLine(aState) {
     // contentline   = name *(";" param ) ":" value CRLF
@@ -422,8 +485,12 @@ ICAL.helpers = {
     }
 
     if ("parameters" in aLineData && "VALUE" in aLineData.parameters) {
-      ICAL.helpers.dumpn("VAAAA: " + aLineData.parameters.VALUE.toString());
-      valueType = aLineData.parameters.VALUE.value.toUpperCase();
+      var valueParam = aLineData.parameters.VALUE;
+      if (typeof(valueParam) === 'string') {
+        valueType = aLineData.parameters.VALUE.toUpperCase();
+      } else if(typeof(valueParam) === 'object') {
+        valueType = valueParam.value.toUpperCase();
+      }
     }
 
     if (!(valueType in ICAL.design.value)) {
@@ -505,7 +572,7 @@ ICAL.helpers = {
       for (var param in reqParam) {
         if (!("parameters" in aLineData) ||
             !(param in aLineData.parameters) ||
-            aLineData.parameters[param].value != reqParam[param]) {
+            aLineData.parameters[param] != reqParam[param]) {
 
           throw new ParserError(aLineData, "Value requires " + param + "=" +
                                 valueData.requireParam[param]);
@@ -1624,6 +1691,31 @@ ICAL.design = {
       return props;
     },
 
+    /**
+     * Adds or replaces a property with a given value.
+     * Suitable for use when updating properties which
+     * are expected to only have a single value (like DTSTART, SUMMARY, etc..)
+     *
+     * @param {String} aName property name.
+     * @param {Object} aValue property value.
+     */
+    updatePropertyWithValue: function updatePropertyWithValue(aName, aValue) {
+      if (!this.hasProperty(aName)) {
+        return this.addPropertyWithValue(aName, aValue);
+      }
+
+      var prop = this.getFirstProperty(aName);
+
+      var lineData = ICAL.icalparser.detectValueType({
+        name: aName.toUpperCase(),
+        value: aValue
+      });
+
+      prop.setValues(lineData.value, lineData.type);
+
+      return prop;
+    },
+
     addPropertyWithValue: function addStringProperty(aName, aValue) {
       var ucName = aName.toUpperCase();
       var lineData = ICAL.icalparser.detectValueType({
@@ -1725,7 +1817,7 @@ ICAL.design = {
   };
 
   ICAL.icalcomponent.fromString = function icalcomponent_from_string(str) {
-    return ICAL.toJSON(str, true);
+    return ICAL.icalcomponent.fromData(ICAL.parse(str));
   };
 
   ICAL.icalcomponent.fromData = function icalcomponent_from_data(aData) {
@@ -2757,7 +2849,7 @@ ICAL.design = {
         this.reset();
       } else {
         if (useUTC) {
-          this.zone = ICAL.icaltimzone.utc_timezone;
+          this.zone = ICAL.icaltimezone.utc_timezone;
           this.year = aDate.getUTCFullYear();
           this.month = aDate.getUTCMonth() + 1;
           this.day = aDate.getUTCDate();
@@ -2803,9 +2895,21 @@ ICAL.design = {
         this.isDate = aData.isDate;
       }
 
-      if (aData && "timezone" in aData && aData.timezone == "Z") {
-        this.zone = ICAL.icaltimezone.utc_timezone;
+      if (aData && "timezone" in aData) {
+        var timezone = aData.timezone;
+
+        //TODO: replace with timezone service
+        switch (timezone) {
+          case 'Z':
+          case ICAL.icaltimezone.utc_timezone.tzid:
+            this.zone = ICAL.icaltimezone.utc_timezone;
+            break;
+          case ICAL.icaltimezone.local_timezone.tzid:
+            this.zone = ICAL.icaltimezone.local_timezone;
+            break;
+        }
       }
+
       if (aData && "zone" in aData) {
         this.zone = aData.zone;
       }
@@ -2825,7 +2929,7 @@ ICAL.design = {
       return this;
     },
 
-    day_of_week: function icaltime_day_of_week() {
+    dayOfWeek: function icaltime_dayOfWeek() {
       // Using Zeller's algorithm
       var q = this.day;
       var m = this.month + (this.month < 3 ? 12 : 0);
@@ -2843,21 +2947,21 @@ ICAL.design = {
       return h;
     },
 
-    day_of_year: function icaltime_day_of_year() {
+    dayOfYear: function icaltime_dayOfYear() {
       var is_leap = (ICAL.icaltime.is_leap_year(this.year) ? 1 : 0);
       var diypm = ICAL.icaltime._days_in_year_passed_month;
       return diypm[is_leap][this.month - 1] + this.day;
     },
 
-    start_of_week: function start_of_week() {
+    startOfWeek: function startOfWeek() {
       var result = this.clone();
-      result.day -= this.day_of_week() - 1;
+      result.day -= this.dayOfWeek() - 1;
       return result.normalize();
     },
 
     end_of_week: function end_of_week() {
       var result = this.clone();
-      result.day += 7 - this.day_of_week();
+      result.day += 7 - this.dayOfWeek();
       return result.normalize();
     },
 
@@ -2873,7 +2977,7 @@ ICAL.design = {
 
     end_of_month: function end_of_month() {
       var result = this.clone();
-      result.day = ICAL.icaltime.days_in_month(result.month, result.year);
+      result.day = ICAL.icaltime.daysInMonth(result.month, result.year);
       result.isDate = true;
       result.hour = 0;
       result.minute = 0;
@@ -2905,62 +3009,138 @@ ICAL.design = {
 
     start_doy_week: function start_doy_week(aFirstDayOfWeek) {
       var firstDow = aFirstDayOfWeek || ICAL.icaltime.SUNDAY;
-      var delta = this.day_of_week() - firstDow;
+      var delta = this.dayOfWeek() - firstDow;
       if (delta < 0) delta += 7;
-      return this.day_of_year() - delta;
+      return this.dayOfYear() - delta;
     },
 
-    nth_weekday: function icaltime_nth_weekday(aDayOfWeek, aPos) {
-      var days_in_month = ICAL.icaltime.days_in_month(this.month, this.year);
+    /**
+     * Finds the nthWeekDay relative to the current month (not day).
+     * The returned value is a day relative the month that this
+     * month belongs to so 1 would indicate the first of the month
+     * and 40 would indicate a day in the following month.
+     *
+     * @param {Numeric} aDayOfWeek day of the week see the day name constants.
+     * @param {Numeric} aPos nth occurrence of a given week day
+     *                       values of 1 and 0 both indicate the first
+     *                       weekday of that type. aPos may be either positive
+     *                       or negative.
+     *
+     * @return {Numeric} numeric value indicating a day relative
+     *                   to the current month of this time object.
+     */
+    nthWeekDay: function icaltime_nthWeekDay(aDayOfWeek, aPos) {
+      var daysInMonth = ICAL.icaltime.daysInMonth(this.month, this.year);
       var weekday;
       var pos = aPos;
 
-      var otherday = this.clone();
+      var start = 0;
+
+      var otherDay = this.clone();
 
       if (pos >= 0) {
-        otherday.day = 1;
-        var start_dow = otherday.day_of_week();
+        otherDay.day = 1;
 
+        // because 0 means no position has been given
+        // 1 and 0 indicate the same day.
         if (pos != 0) {
+          // remove the extra numeric value
           pos--;
         }
 
-        weekday = aDayOfWeek - start_dow + 1;
+        // set current start offset to current day.
+        start = otherDay.day;
 
-        if (weekday <= 0) {
-          weekday += 7;
-        }
+        // find the current day of week
+        var startDow = otherDay.dayOfWeek();
+
+        // calculate the difference between current
+        // day of the week and desired day of the week
+        var offset = aDayOfWeek - startDow;
+
+
+        // if the offset goes into the past
+        // week we add 7 so its goes into the next
+        // week. We only want to go forward in time here.
+        if (offset < 0)
+          // this is really important otherwise we would
+          // end up with dates from in the past.
+          offset += 7;
+
+        // add offset to start so start is the same
+        // day of the week as the desired day of week.
+        start += offset;
+
+        // because we are going to add (and multiply)
+        // the numeric value of the day we subtract it
+        // from the start position so not to add it twice.
+        start -= aDayOfWeek;
+
+        // set week day
+        weekday = aDayOfWeek;
       } else {
-        otherday.day = days_in_month;
-        var end_dow = otherday.day_of_week();
+
+        // then we set it to the last day in the current month
+        otherDay.day = daysInMonth;
+
+        // find the ends weekday
+        var endDow = otherDay.dayOfWeek();
 
         pos++;
 
-        weekday = (end_dow - dow);
+        weekday = (endDow - aDayOfWeek);
 
         if (weekday < 0) {
           weekday += 7;
         }
 
-        weekday = days_in_month - weekday;
+        weekday = daysInMonth - weekday;
       }
 
       weekday += pos * 7;
 
-      return weekday;
+      return start + weekday;
+    },
+
+    /**
+     * Checks if current time is the nthWeekDay.
+     * Relative to the current month.
+     *
+     * Will always return false when rule resolves
+     * outside of current month.
+     *
+     * @param {Numeric} aDayOfWeek day of week.
+     * @param {Numeric} aPos position.
+     * @param {Numeric} aMax maximum valid day.
+     */
+    isNthWeekDay: function(aDayOfWeek, aPos) {
+      var dow = this.dayOfWeek();
+
+      if (aPos === 0 && dow === aDayOfWeek) {
+        return true;
+      }
+
+      // get pos
+      var day = this.nthWeekDay(aDayOfWeek, aPos);
+
+      if (day === this.day) {
+        return true;
+      }
+
+      return false;
     },
 
     week_number: function week_number(aWeekStart) {
       // This function courtesty of Julian Bucknall, published under the MIT license
       // http://www.boyet.com/articles/publishedarticles/calculatingtheisoweeknumb.html
-      var doy = this.day_of_year();
-      var dow = this.day_of_week();
+      var doy = this.dayOfYear();
+      var dow = this.dayOfWeek();
       var year = this.year;
       var week1;
 
       var dt = this.clone();
       dt.isDate = true;
-      var first_dow = dt.day_of_week();
+      var first_dow = dt.dayOfWeek();
       var isoyear = this.year;
 
       if (dt.month == 12 && dt.day > 28) {
@@ -3014,23 +3194,23 @@ ICAL.design = {
       dur.hours = this.hour - aDate.hour;
 
       if (this.year == aDate.year) {
-        var this_doy = this.day_of_year();
-        var that_doy = aDate.day_of_year();
+        var this_doy = this.dayOfYear();
+        var that_doy = aDate.dayOfYear();
         dur.days = this_doy - that_doy;
       } else if (this.year < aDate.year) {
         var days_left_thisyear = 365 +
           (ICAL.icaltime.is_leap_year(this.year) ? 1 : 0) -
-          this.day_of_year();
+          this.dayOfYear();
 
-        dur.days -= days_left_thisyear + aDate.day_of_year();
+        dur.days -= days_left_thisyear + aDate.dayOfYear();
         dur.days -= leap_years_between(this.year + 1, aDate.year);
         dur.days -= 365 * (aDate.year - this.year - 1);
       } else {
         var days_left_thatyear = 365 +
           (ICAL.icaltime.is_leap_year(aDate.year) ? 1 : 0) -
-          aDate.day_of_year();
+          aDate.dayOfYear();
 
-        dur.days += days_left_thatyear + this.day_of_year();
+        dur.days += days_left_thatyear + this.dayOfYear();
         dur.days += leap_years_between(aDate.year + 1, this.year);
         dur.days += 365 * (this.year - aDate.year - 1);
       }
@@ -3169,7 +3349,7 @@ ICAL.design = {
       var second, minute, hour, day;
       var minutes_overflow, hours_overflow, days_overflow = 0,
         years_overflow = 0;
-      var days_in_month;
+      var daysInMonth;
 
       if (!this.isDate) {
         second = this.second + aExtraSeconds;
@@ -3212,8 +3392,8 @@ ICAL.design = {
       day = this.day + aExtraDays + days_overflow;
       if (day > 0) {
         for (;;) {
-          var days_in_month = ICAL.icaltime.days_in_month(this.month, this.year);
-          if (day <= days_in_month) {
+          var daysInMonth = ICAL.icaltime.daysInMonth(this.month, this.year);
+          if (day <= daysInMonth) {
             break;
           }
 
@@ -3223,7 +3403,7 @@ ICAL.design = {
             this.month = 1;
           }
 
-          day -= days_in_month;
+          day -= daysInMonth;
         }
       } else {
         while (day <= 0) {
@@ -3234,7 +3414,7 @@ ICAL.design = {
             this.month--;
           }
 
-          day += ICAL.icaltime.days_in_month(this.month, this.year);
+          day += ICAL.icaltime.daysInMonth(this.month, this.year);
         }
       }
 
@@ -3252,7 +3432,52 @@ ICAL.design = {
     toUnixTime: function toUnixTime() {
       var dur = this.subtractDate(ICAL.icaltime.epoch_time);
       return dur.toSeconds();
+    },
+
+    /**
+     * Converts time to into Object
+     * which can be serialized then re-created
+     * using the constructor.
+     *
+     * Example:
+     *
+     *    // toJSON will automatically be called
+     *    var json = JSON.stringify(mytime);
+     *
+     *    var deserialized = JSON.parse(json);
+     *
+     *    var time = new ICAL.icaltime(deserialized);
+     *
+     */
+    toJSON: function() {
+      var copy = [
+        'year',
+        'month',
+        'day',
+        'hour',
+        'minute',
+        'second',
+        'isDate'
+      ];
+
+      var result = Object.create(null);
+
+      var i = 0;
+      var len = copy.length;
+      var prop;
+
+      for (; i < len; i++) {
+        prop = copy[i];
+        result[prop] = this[prop];
+      }
+
+      if (this.zone) {
+        result.timezone = this.zone.tzid;
+      }
+
+      return result;
     }
+
   };
 
   (function setupNormalizeAttributes() {
@@ -3291,13 +3516,13 @@ ICAL.design = {
     }
   })();
 
-  ICAL.icaltime.days_in_month = function icaltime_days_in_month(month, year) {
-    var _days_in_month = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  ICAL.icaltime.daysInMonth = function icaltime_daysInMonth(month, year) {
+    var _daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
     var days = 30;
 
     if (month < 1 || month > 12) return days;
 
-    days = _days_in_month[month];
+    days = _daysInMonth[month];
 
     if (month == 2) {
       days += ICAL.icaltime.is_leap_year(year);
@@ -3314,7 +3539,7 @@ ICAL.design = {
     }
   };
 
-  ICAL.icaltime.from_day_of_year = function icaltime_from_day_of_year(aDayOfYear, aYear) {
+  ICAL.icaltime.fromDayOfYear = function icaltime_fromDayOfYear(aDayOfYear, aYear) {
     var year = aYear;
     var doy = aDayOfYear;
     var tt = new ICAL.icaltime();
@@ -3373,7 +3598,7 @@ ICAL.design = {
       isDate: true
     });
 
-    var fourth_dow = t.day_of_week();
+    var fourth_dow = t.dayOfWeek();
     t.day += (1 - fourth_dow) + ((aWeekStart || ICAL.icaltime.SUNDAY) - 1);
     return t;
   };
@@ -3417,6 +3642,17 @@ ICAL.design = {
 
 (typeof(ICAL) === 'undefined')? ICAL = {} : '';
 (function() {
+
+  var DOW_MAP = {
+    SU: 1,
+    MO: 2,
+    TU: 3,
+    WE: 4,
+    TH: 5,
+    FR: 6,
+    SA: 7
+  };
+
   ICAL.icalrecur = function icalrecur(data) {
     this.wrappedJSObject = this;
     this.parts = {};
@@ -3436,7 +3672,10 @@ ICAL.design = {
     icaltype: "RECUR",
 
     iterator: function(aStart) {
-      return new icalrecur_iterator(this, aStart);
+      return new ICAL.icalrecur_iterator({
+        rule: this,
+        dtstart: aStart
+      });
     },
 
     clone: function clone() {
@@ -3444,12 +3683,12 @@ ICAL.design = {
       //return ICAL.icalrecur.fromIcalProperty(this.toIcalProperty());
     },
 
-    is_finite: function isfinite() {
-      return (this.count || this.until);
+    isFinite: function isfinite() {
+      return !!(this.count || this.until);
     },
 
-    is_by_count: function isbycount() {
-      return (this.count && !this.until);
+    isByCount: function isbycount() {
+      return !!(this.count && !this.until);
     },
 
     addComponent: function addPart(aType, aValue) {
@@ -3489,8 +3728,37 @@ ICAL.design = {
       return next;
     },
 
+    toJSON: function() {
+      //XXX: extract this list up to proto?
+      var propsToCopy = [
+        "freq",
+        "count",
+        "until",
+        "wkst",
+        "interval",
+        "parts"
+      ];
+
+      var result = Object.create(null);
+
+      var i = 0;
+      var len = propsToCopy.length;
+      var prop;
+
+      for (; i < len; i++) {
+        var prop = propsToCopy[i];
+        result[prop] = this[prop];
+      }
+
+      if (result.until instanceof ICAL.icaltime) {
+        result.until = result.until.toJSON();
+      }
+
+      return result;
+    },
+
     fromData: function fromData(aData) {
-      var propsToCopy = ["freq", "count", "wkst", "interval"];
+      var propsToCopy = ["freq", "count", "until", "wkst", "interval"];
       for (var key in propsToCopy) {
         var prop = propsToCopy[key];
         if (aData && prop.toUpperCase() in aData) {
@@ -3502,8 +3770,19 @@ ICAL.design = {
         }
       }
 
-      if (aData && "until" in aData && aData.until) {
-        this.until = aData.until.clone();
+      // wkst is usually in SU, etc.. format we need
+      // to convert it from the string
+      if (typeof(this.wkst) === 'string') {
+        this.wkst = ICAL.icalrecur.icalDayToNumericDay(this.wkst);
+      }
+
+      // Another hack for multiple construction of until value.
+      if (this.until) {
+        if (this.until instanceof ICAL.icaltime) {
+          this.until = this.until.clone();
+        } else {
+          this.until = ICAL.icaltime.fromData(this.until);
+        }
       }
 
       var partsToCopy = ["BYSECOND", "BYMINUTE", "BYHOUR", "BYDAY",
@@ -3594,39 +3873,109 @@ ICAL.design = {
     return recur;
   };
 
-  function icalrecur_iterator(aRule, aStart) {
-    this.rule = aRule;
-    this.dtstart = aStart;
-    this.by_data = ICAL.helpers.clone(aRule.parts, true);
-    this.days = [];
-    this.init();
+  /**
+   * Convert an ical representation of a day (SU, MO, etc..)
+   * into a numeric value of that day.
+   *
+   * @param {String} day ical day.
+   * @return {Numeric} numeric value of given day.
+   */
+  ICAL.icalrecur.icalDayToNumericDay = function toNumericDay(string) {
+    //XXX: this is here so we can deal
+    //     with possibly invalid string values.
+
+    return DOW_MAP[string];
+  };
+
+})();
+ICAL.icalrecur_iterator = (function() {
+
+  /**
+   * Options:
+   *  - rule: (ICAL.icalrecur) instance
+   *  - dtstart: (ICAL.icaltime) start date of recurrence rule
+   *  - initialized: (Boolean) when true will assume options
+   *                           are from previously constructed
+   *                           iterator and will not re-initialize
+   *                           iterator but resume its state from given data.
+   *
+   *  - by_data: (for iterator de-serialization)
+   *  - days: "
+   *  - last: "
+   *  - by_indices: "
+   */
+  function icalrecur_iterator(options) {
+    this.fromData(options);
   }
 
   icalrecur_iterator.prototype = {
+
+    /**
+     * True when iteration is finished.
+     */
+    completed: false,
 
     rule: null,
     dtstart: null,
     last: null,
     occurrence_number: 0,
     by_indices: null,
+    initialized: false,
     by_data: null,
 
     days: null,
     days_index: 0,
 
+    fromData: function(options) {
+      this.rule = ICAL.helpers.formatClassType(options.rule, ICAL.icalrecur);
+
+      if (!this.rule) {
+        throw new Error('iterator requires a (ICAL.icalrecur) rule');
+      }
+
+      this.dtstart = ICAL.helpers.formatClassType(options.dtstart, ICAL.icaltime);
+
+      if (!this.dtstart) {
+        throw new Error('iterator requires a (ICAL.icaltime) dtstart');
+      }
+
+      if (options.by_data) {
+        this.by_data = options.by_data;
+      } else {
+        this.by_data = ICAL.helpers.clone(this.rule.parts, true);
+      }
+
+      if (options.occurrence_number)
+        this.occurrence_number = options.occurrence_number;
+
+      this.days = options.days || [];
+      this.last = ICAL.helpers.formatClassType(options.last, ICAL.icaltime);
+
+      this.by_indices = options.by_indices;
+
+      if (!this.by_indices) {
+        this.by_indices = {
+          "BYSECOND": 0,
+          "BYMINUTE": 0,
+          "BYHOUR": 0,
+          "BYDAY": 0,
+          "BYMONTH": 0,
+          "BYWEEKNO": 0,
+          "BYMONTHDAY": 0
+        };
+      }
+
+      this.initialized = options.initialized || false;
+
+      if (!this.initialized) {
+        this.init();
+      }
+    },
+
     init: function icalrecur_iterator_init() {
+      this.initialized = true;
       this.last = this.dtstart.clone();
       var parts = this.by_data;
-
-      this.by_indices = {
-        "BYSECOND": 0,
-        "BYMINUTE": 0,
-        "BYHOUR": 0,
-        "BYDAY": 0,
-        "BYMONTH": 0,
-        "BYWEEKNO": 0,
-        "BYMONTHDAY": 0
-      };
 
       if ("BYDAY" in parts) {
         // libical does this earlier when the rule is loaded, but we postpone to
@@ -3674,17 +4023,17 @@ ICAL.design = {
 
       if (this.rule.freq == "WEEKLY") {
         if ("BYDAY" in parts) {
-          var parts = this.rule_day_of_week(parts.BYDAY[0]);
+          var parts = this.ruleDayOfWeek(parts.BYDAY[0]);
           var pos = parts[0];
           var rule_dow = parts[1];
-          var dow = rule_dow - this.last.day_of_week();
-          if ((this.last.day_of_week() < rule_dow && dow >= 0) || dow < 0) {
+          var dow = rule_dow - this.last.dayOfWeek();
+          if ((this.last.dayOfWeek() < rule_dow && dow >= 0) || dow < 0) {
             // Initial time is after first day of BYDAY data
             this.last.day += dow;
             this.last.normalize();
           }
         } else {
-          var wkMap = icalrecur_iterator._wkdayMap[this.dtstart.day_of_week()];
+          var wkMap = icalrecur_iterator._wkdayMap[this.dtstart.dayOfWeek()];
           parts.BYDAY = [wkMap];
         }
       }
@@ -3698,24 +4047,25 @@ ICAL.design = {
           this.increment_year(this.rule.interval);
         }
 
-        var next = ICAL.icaltime.from_day_of_year(this.days[0], this.last.year);
+        var next = ICAL.icaltime.fromDayOfYear(this.days[0], this.last.year);
 
         this.last.day = next.day;
         this.last.month = next.month;
       }
 
       if (this.rule.freq == "MONTHLY" && this.has_by_data("BYDAY")) {
+
         var coded_day = this.by_data.BYDAY[this.by_indices.BYDAY];
-        var parts = this.rule_day_of_week(coded_day);
+        var parts = this.ruleDayOfWeek(coded_day);
         var pos = parts[0];
         var dow = parts[1];
 
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
+        var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
         var poscount = 0;
 
         if (pos >= 0) {
-          for (this.last.day = 1; this.last.day <= days_in_month; this.last.day++) {
-            if (this.last.day_of_week() == dow) {
+          for (this.last.day = 1; this.last.day <= daysInMonth; this.last.day++) {
+            if (this.last.dayOfWeek() == dow) {
               if (++poscount == pos || pos == 0) {
                 break;
               }
@@ -3723,8 +4073,8 @@ ICAL.design = {
           }
         } else {
           pos = -pos;
-          for (this.last.day = days_in_month; this.last.day != 0; this.last.day--) {
-            if (this.last.day_of_week() == dow) {
+          for (this.last.day = daysInMonth; this.last.day != 0; this.last.day--) {
+            if (this.last.dayOfWeek() == dow) {
               if (++poscount == pos) {
                 break;
               }
@@ -3732,14 +4082,23 @@ ICAL.design = {
           }
         }
 
-        if (this.last.day > days_in_month || this.last.day == 0) {
+        //XXX: This feels like a hack, but we need to initialize
+        //     the BYMONTHDAY case correctly and byDayAndMonthDay handles
+        //     this case. It accepts a special flag which will avoid incrementing
+        //     the initial value without the flag days that match the start time
+        //     would be missed.
+        if (this.has_by_data('BYMONTHDAY')) {
+          this._byDayAndMonthDay(true);
+        }
+
+        if (this.last.day > daysInMonth || this.last.day == 0) {
           throw new Error("Malformed values in BYDAY part");
         }
 
       } else if (this.has_by_data("BYMONTHDAY")) {
         if (this.last.day < 0) {
-          var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
-          this.last.day = days_in_month + this.last.day + 1;
+          var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
+          this.last.day = daysInMonth + this.last.day + 1;
         }
 
         this.last.normalize();
@@ -3751,6 +4110,11 @@ ICAL.design = {
 
       if ((this.rule.count && this.occurrence_number >= this.rule.count) ||
           (this.rule.until && this.last.compare(this.rule.until) > 0)) {
+
+        //XXX: right now this is just a flag and has no impact
+        //     we can simplify the above case to check for completed later.
+        this.completed = true;
+
         return null;
       }
 
@@ -3776,7 +4140,6 @@ ICAL.design = {
         case "DAILY":
           this.next_day();
           break;
-
         case "WEEKLY":
           this.next_week();
           break;
@@ -3801,6 +4164,7 @@ ICAL.design = {
       }
 
       if (this.rule.until && this.last.compare(this.rule.until) > 0) {
+        this.completed = true;
         return null;
       } else {
         this.occurrence_number++;
@@ -3886,6 +4250,178 @@ ICAL.design = {
       return end_of_data;
     },
 
+    /**
+     * normalize each by day rule for a given year/month.
+     * Takes into account ordering and negative rules
+     *
+     * @param {Numeric} year current year.
+     * @param {Numeric} month current month.
+     * @param {Array} rules array of rules.
+     *
+     * @return {Array} sorted and normalized rules.
+     *                 Negative rules will be expanded to their
+     *                 correct positive values for easier processing.
+     */
+    normalizeByMonthDayRules: function(year, month, rules) {
+      var daysInMonth = ICAL.icaltime.daysInMonth(month, year);
+
+      // XXX: This is probably bad for performance to allocate
+      //      a new array for each month we scan, if possible
+      //      we should try to optimize this...
+      var newRules = [];
+
+      var ruleIdx = 0;
+      var len = rules.length;
+      var rule;
+
+      for (; ruleIdx < len; ruleIdx++) {
+        rule = rules[ruleIdx];
+
+        // if this rule falls outside of given
+        // month discard it.
+        if (Math.abs(rule) > daysInMonth) {
+          continue;
+        }
+
+        // negative case
+        if (rule < 0) {
+          // we add (not subtract its a negative number)
+          // one from the rule because 1 === last day of month
+          rule = daysInMonth + (rule + 1);
+        } else if (rule === 0) {
+          // skip zero its invalid.
+          continue;
+        }
+
+        // only add unique items...
+        if (newRules.indexOf(rule) === -1) {
+          newRules.push(rule);
+        }
+
+      }
+
+      // unique and sort
+      return newRules.sort();
+    },
+
+    /**
+     * NOTES:
+     * We are given a list of dates in the month (BYMONTHDAY) (23, etc..)
+     * Also we are given a list of days (BYDAY) (MO, 2SU, etc..) when
+     * both conditions match a given date (this.last.day) iteration stops.
+     *
+     * @param {Boolean} [isInit] when given true will not
+     *                           increment the current day (this.last).
+     */
+    _byDayAndMonthDay: function(isInit) {
+     var byMonthDay; // setup in initMonth
+      var byDay = this.by_data.BYDAY;
+
+      var date;
+      var dateIdx = 0;
+      var dateLen; // setup in initMonth
+      var dayIdx = 0;
+      var dayLen = byDay.length;
+
+      // we are not valid by default
+      var dataIsValid = 0;
+
+      var daysInMonth;
+      var self = this;
+
+      function initMonth() {
+        daysInMonth = ICAL.icaltime.daysInMonth(
+          self.last.month, self.last.year
+        );
+
+        byMonthDay = self.normalizeByMonthDayRules(
+          self.last.year,
+          self.last.month,
+          self.by_data.BYMONTHDAY
+        );
+
+        dateLen = byMonthDay.length;
+      }
+
+      function nextMonth() {
+        self.last.day = 1;
+        self.increment_month();
+        initMonth();
+
+        dateIdx = 0;
+        dayIdx = 0;
+      }
+
+      initMonth();
+
+      // should come after initMonth
+      if (isInit) {
+        this.last.day -= 1;
+      }
+
+      while (!dataIsValid) {
+        // find next date
+        var next = byMonthDay[dateIdx++];
+
+        // increment the current date. This is really
+        // important otherwise we may fall into the infinite
+        // loop trap. The initial date takes care of the case
+        // where the current date is the date we are looking
+        // for.
+        date = this.last.day + 1;
+
+        if (date > daysInMonth) {
+          nextMonth();
+          continue;
+        }
+
+        // after verify that the next date
+        // is in the current month we can increment
+        // it permanently.
+        this.last.day = date;
+
+        // this logic is dependant on the BYMONTHDAYS
+        // being in order (which is done by #normalizeByMonthDayRules)
+        if (next >= this.last.day) {
+          // if the next month day is in the future jump to it.
+          this.last.day = next;
+        } else {
+          // in this case the 'next' monthday has past
+          // we must move to the month.
+          nextMonth();
+          continue;
+        }
+
+        // Now we can loop through the day rules to see
+        // if one matches the current month date.
+        for (dayIdx = 0; dayIdx < dayLen; dayIdx++) {
+          var parts = this.ruleDayOfWeek(byDay[dayIdx]);
+          var pos = parts[0];
+          var dow = parts[1];
+
+          if (this.last.isNthWeekDay(dow, pos)) {
+            // when we find the valid one we can mark
+            // the conditions as met and break the loop.
+            // (Because we have this condition above
+            //  it will also break the parent loop).
+            dataIsValid = 1;
+            break;
+          }
+        }
+
+        // Its completely possible that the combination
+        // cannot be matched in the current month.
+        // When we reach the end of possible combinations
+        // in the current month we iterate to the next one.
+        if (!dataIsValid && dateIdx === (dateLen - 1)) {
+          nextMonth();
+          continue;
+        }
+      }
+
+      return dataIsValid;
+    },
+
     next_month: function next_month() {
       var this_freq = (this.rule.freq == "MONTHLY");
       var data_valid = 1;
@@ -3895,42 +4431,14 @@ ICAL.design = {
       }
 
       if (this.has_by_data("BYDAY") && this.has_by_data("BYMONTHDAY")) {
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
-        var notFound = true;
-        var day;
-
-        for (day = last.day + 1; notFound && day <= days_in_month; day++) {
-          for (var dayIdx = 0; dayIdx < this.by_data.BYDAY.length; dayIdx++) {
-            for (var mdIdx = 0; mdIdx < this.by_data.BYMONTHDAY.length; mdIdx++) {
-              var parts = this.rule_day_of_week(this.by_data.BYDAY[dayIdx]);
-              var pos = parts[0];
-              var dow = parts[1];
-              var mday = this.by_data.BYMONTHDAY[mdIdx];
-
-              this.last.day = day;
-              var this_dow = this.last.day_of_week();
-
-              if ((pos == 0 && dow == this_dow && mday == day) ||
-                  (this.last.nth_weekday(dow, pos))) {
-                notFound = false;
-              }
-            }
-          }
-        }
-        if (day > days_in_month) {
-          this.last.day = 1;
-          this.increment_month();
-          this.last.day--;
-          data_valid = 0;
-        }
-
+        data_valid = this._byDayAndMonthDay();
       } else if (this.has_by_data("BYDAY")) {
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
+        var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
         var setpos = 0;
 
         if (this.has_by_data("BYSETPOS")) {
-          var lastday = this.last.day;
-          for (var day = 1; day <= days_in_month; day++) {
+          var last_day = this.last.day;
+          for (var day = 1; day <= daysInMonth; day++) {
             this.last.day = day;
             if (this.is_day_in_byday(this.last) && day <= last_day) {
               setpos++;
@@ -3939,22 +4447,21 @@ ICAL.design = {
           this.last.day = last_day;
         }
 
-        for (var day = this.last.day + 1; day <= days_in_month; day++) {
+        for (var day = this.last.day + 1; day <= daysInMonth; day++) {
           this.last.day = day;
 
           if (this.is_day_in_byday(this.last)) {
             if (!this.has_by_data("BYSETPOS") ||
                 this.check_set_position(++setpos) ||
                 this.check_set_position(setpos - this.by_data.BYSETPOS.length - 1)) {
-              found = 1;
+
+              data_valid = 1;
               break;
             }
           }
         }
 
-        data_valid = found;
-
-        if (day > days_in_month) {
+        if (day > daysInMonth) {
           this.last.day = 1;
           this.increment_month();
 
@@ -3974,15 +4481,15 @@ ICAL.design = {
           this.increment_month();
         }
 
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
+        var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
 
         var day = this.by_data.BYMONTHDAY[this.by_indices.BYMONTHDAY];
 
         if (day < 0) {
-          day = days_in_month + day + 1;
+          day = daysInMonth + day + 1;
         }
 
-        if (day > days_in_month) {
+        if (day > daysInMonth) {
           this.last.day = 1;
           data_valid = this.is_day_in_byday(this.last);
         }
@@ -3991,8 +4498,8 @@ ICAL.design = {
       } else {
         this.last.day = this.by_data.BYMONTHDAY[0];
         this.increment_month();
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
-        this.last.day = Math.min(this.last.day, days_in_month);
+        var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
+        this.last.day = Math.min(this.last.day, daysInMonth);
       }
 
       return data_valid;
@@ -4020,7 +4527,7 @@ ICAL.design = {
         }
 
         var coded_day = this.by_data.BYDAY[this.by_indices.BYDAY];
-        var parts = this.rule_day_of_week(coded_day);
+        var parts = this.ruleDayOfWeek(coded_day);
         var dow = parts[1];
 
         dow -= this.rule.wkst;
@@ -4032,16 +4539,16 @@ ICAL.design = {
         tt.month = this.last.month;
         tt.day = this.last.day;
 
-        var start_of_week = tt.start_doy_week(this.rule.wkst);
+        var startOfWeek = tt.start_doy_week(this.rule.wkst);
 
-        if (dow + start_of_week < 1) {
+        if (dow + startOfWeek < 1) {
           // The selected date is in the previous year
           if (!end_of_data) {
             continue;
           }
         }
 
-        var next = ICAL.icaltime.from_day_of_year(start_of_week + dow,
+        var next = ICAL.icaltime.fromDayOfYear(startOfWeek + dow,
                                                   this.last.year);
 
         this.last.day = next.day;
@@ -4066,7 +4573,7 @@ ICAL.design = {
         } while (this.days.length == 0);
       }
 
-      var next = ICAL.icaltime.from_day_of_year(this.days[this.days_index],
+      var next = ICAL.icaltime.fromDayOfYear(this.days[this.days_index],
                                                 this.last.year);
 
       this.last.day = next.day;
@@ -4075,19 +4582,12 @@ ICAL.design = {
       return 1;
     },
 
-    rule_day_of_week: function rule_day_of_week(dow) {
-      var dowMap = {
-        SU: 1,
-        MO: 2,
-        TU: 3,
-        WE: 4,
-        TH: 5,
-        FR: 6,
-        SA: 7
-      };
+    ruleDayOfWeek: function ruleDayOfWeek(dow) {
       var matches = dow.match(/([+-]?[0-9])?(MO|TU|WE|TH|FR|SA|SU)/);
       if (matches) {
-        return [parseInt(matches[1] || 0, 10), dowMap[matches[2]]] || 0;
+        var pos = parseInt(matches[1] || 0, 10);
+        dow = ICAL.icalrecur.icalDayToNumericDay(matches[2]);
+        return [pos, dow];
       } else {
         return [0, 0];
       }
@@ -4126,11 +4626,11 @@ ICAL.design = {
 
     increment_monthday: function increment_monthday(inc) {
       for (var i = 0; i < inc; i++) {
-        var days_in_month = ICAL.icaltime.days_in_month(this.last.month, this.last.year);
+        var daysInMonth = ICAL.icaltime.daysInMonth(this.last.month, this.last.year);
         this.last.day++;
 
-        if (this.last.day > days_in_month) {
-          this.last.day -= days_in_month;
+        if (this.last.day > daysInMonth) {
+          this.last.day -= daysInMonth;
           this.increment_month();
         }
       }
@@ -4208,7 +4708,7 @@ ICAL.design = {
           t.month = month;
           t.day = 1;
           var first_week = t.week_number(this.rule.wkst);
-          t.day = ICAL.icaltime.days_in_month(month, aYear);
+          t.day = ICAL.icaltime.daysInMonth(month, aYear);
           var last_week = t.week_number(this.rule.wkst);
           for (monthIdx = first_week; monthIdx < last_week; monthIdx++) {
             validWeeks[monthIdx] = 1;
@@ -4236,14 +4736,14 @@ ICAL.design = {
       if (partCount == 0) {
         var t = this.dtstart.clone();
         t.year = this.last.year;
-        this.days.push(t.day_of_year());
+        this.days.push(t.dayOfYear());
       } else if (partCount == 1 && "BYMONTH" in parts) {
         for (var monthkey in this.by_data.BYMONTH) {
           var t2 = this.dtstart.clone();
           t2.year = aYear;
           t2.month = this.by_data.BYMONTH[monthkey];
           t2.isDate = true;
-          this.days.push(t2.day_of_year());
+          this.days.push(t2.dayOfYear());
         }
       } else if (partCount == 1 && "BYMONTHDAY" in parts) {
         for (var monthdaykey in this.by_data.BYMONTHDAY) {
@@ -4251,7 +4751,7 @@ ICAL.design = {
           t2.day = this.by_data.BYMONTHDAY[monthdaykey];
           t2.year = aYear;
           t2.isDate = true;
-          this.days.push(t2.day_of_year());
+          this.days.push(t2.dayOfYear());
         }
       } else if (partCount == 2 &&
                  "BYMONTHDAY" in parts &&
@@ -4263,7 +4763,7 @@ ICAL.design = {
             t.year = aYear;
             t.isDate = true;
 
-            this.days.push(t.day_of_year());
+            this.days.push(t.dayOfYear());
           }
         }
       } else if (partCount == 1 && "BYWEEKNO" in parts) {
@@ -4276,23 +4776,24 @@ ICAL.design = {
         this.days = this.days.concat(this.expand_by_day(aYear));
       } else if (partCount == 2 && "BYDAY" in parts && "BYMONTH" in parts) {
         for (var monthkey in this.by_data.BYMONTH) {
-          var days_in_month = ICAL.icaltime.days_in_month(month, aYear);
+          month = this.by_data.BYMONTH[monthkey];
+          var daysInMonth = ICAL.icaltime.daysInMonth(month, aYear);
 
           t.year = aYear;
           t.month = this.by_data.BYMONTH[monthkey];
           t.day = 1;
           t.isDate = true;
 
-          var first_dow = t.day_of_week();
-          var doy_offset = t.day_of_year() - 1;
+          var first_dow = t.dayOfWeek();
+          var doy_offset = t.dayOfYear() - 1;
 
-          t.day = days_in_month;
-          var last_dow = t.day_of_week();
+          t.day = daysInMonth;
+          var last_dow = t.dayOfWeek();
 
           if (this.has_by_data("BYSETPOS")) {
             var set_pos_counter = 0;
             var by_month_day = [];
-            for (var day = 1; day <= days_in_month; day++) {
+            for (var day = 1; day <= daysInMonth; day++) {
               t.day = day;
               if (this.is_day_in_byday(t)) {
                 by_month_day.push(day);
@@ -4307,22 +4808,25 @@ ICAL.design = {
             }
           } else {
             for (var daycodedkey in this.by_data.BYDAY) {
+              //TODO: This should return dates in order of occurrence
+              //      (1,2,3, etc...) instead of by weekday (su, mo, etc..)
               var coded_day = this.by_data.BYDAY[daycodedkey];
-              var parts = this.rule_day_of_week(coded_day);
-              var dow = parts[0];
-              var pos = parts[1];
+              var parts = this.ruleDayOfWeek(coded_day);
+              var pos = parts[0];
+              var dow = parts[1];
+              var month_day;
 
               var first_matching_day = ((dow + 7 - first_dow) % 7) + 1;
-              var last_matching_day = days_in_month - ((last_dow + 7 - dow) % 7);
+              var last_matching_day = daysInMonth - ((last_dow + 7 - dow) % 7);
 
               if (pos == 0) {
-                for (var day = first_matching_day; day <= days_in_month; day += 7) {
+                for (var day = first_matching_day; day <= daysInMonth; day += 7) {
                   this.days.push(doy_offset + day);
                 }
               } else if (pos > 0) {
                 month_day = first_matching_day + (pos - 1) * 7;
 
-                if (month_day <= days_in_month) {
+                if (month_day <= daysInMonth) {
                   this.days.push(doy_offset + month_day);
                 }
               } else {
@@ -4340,7 +4844,7 @@ ICAL.design = {
 
         for (var daykey in expandedDays) {
           var day = expandedDays[daykey];
-          var tt = ICAL.icaltime.from_day_of_year(day, aYear);
+          var tt = ICAL.icaltime.fromDayOfYear(day, aYear);
           if (this.by_data.BYMONTHDAY.indexOf(tt.day) >= 0) {
             this.days.push(day);
           }
@@ -4353,7 +4857,7 @@ ICAL.design = {
 
         for (var daykey in expandedDays) {
           var day = expandedDays[daykey];
-          var tt = ICAL.icaltime.from_day_of_year(day, aYear);
+          var tt = ICAL.icaltime.fromDayOfYear(day, aYear);
 
           if (this.by_data.BYMONTH.indexOf(tt.month) >= 0 &&
               this.by_data.BYMONTHDAY.indexOf(tt.day) >= 0) {
@@ -4365,7 +4869,7 @@ ICAL.design = {
 
         for (var daykey in expandedDays) {
           var day = expandedDays[daykey];
-          var tt = ICAL.icaltime.from_day_of_year(day, aYear);
+          var tt = ICAL.icaltime.fromDayOfYear(day, aYear);
           var weekno = tt.week_number(this.rule.wkst);
 
           if (this.by_data.BYWEEKNO.indexOf(weekno)) {
@@ -4395,18 +4899,18 @@ ICAL.design = {
       tmp.day = 1;
       tmp.isDate = true;
 
-      var start_dow = tmp.day_of_week();
+      var start_dow = tmp.dayOfWeek();
 
       tmp.month = 12;
       tmp.day = 31;
       tmp.isDate = true;
 
-      var end_dow = tmp.day_of_week();
-      var end_year_day = tmp.day_of_year();
+      var end_dow = tmp.dayOfWeek();
+      var end_year_day = tmp.dayOfYear();
 
       for (var daykey in this.by_data.BYDAY) {
         var day = this.by_data.BYDAY[daykey];
-        var parts = this.rule_day_of_week(day);
+        var parts = this.ruleDayOfWeek(day);
         var pos = parts[0];
         var dow = parts[1];
 
@@ -4445,13 +4949,13 @@ ICAL.design = {
     is_day_in_byday: function is_day_in_byday(tt) {
       for (var daykey in this.by_data.BYDAY) {
         var day = this.by_data.BYDAY[daykey];
-        var parts = this.rule_day_of_week(day);
+        var parts = this.ruleDayOfWeek(day);
         var pos = parts[0];
         var dow = parts[1];
-        var this_dow = tt.day_of_week();
+        var this_dow = tt.dayOfWeek();
 
         if ((pos == 0 && dow == this_dow) ||
-            (tt.nth_weekday(dow, pos) == tt.day)) {
+            (tt.nthWeekDay(dow, pos) == tt.day)) {
           return 1;
         }
       }
@@ -4459,16 +4963,27 @@ ICAL.design = {
       return 0;
     },
 
+    /**
+     * Checks if given value is in BYSETPOS.
+     *
+     * @param {Numeric} aPos position to check for.
+     * @return {Boolean} false unless BYSETPOS rules exist
+     *                   and the given value is present in rules.
+     */
     check_set_position: function check_set_position(aPos) {
-      return ("BYSETPOS" in this.by_data &&
-              this.by_data.BYSETPOS.indexOf(aPos));
+      if (this.has_by_data('BYSETPOS')) {
+        var idx = this.by_data.BYSETPOS.indexOf(aPos);
+        // negative numbers are not false-y
+        return idx !== -1;
+      }
+      return false;
     },
 
     sort_byday_rules: function icalrecur_sort_byday_rules(aRules, aWeekStart) {
       for (var i = 0; i < aRules.length; i++) {
         for (var j = 0; j < i; j++) {
-          var one = this.rule_day_of_week(aRules[j])[1];
-          var two = this.rule_day_of_week(aRules[i])[1];
+          var one = this.ruleDayOfWeek(aRules[j])[1];
+          var two = this.ruleDayOfWeek(aRules[i])[1];
           one -= aWeekStart;
           two -= aWeekStart;
           if (one < 0) one += 7;
@@ -4490,8 +5005,11 @@ ICAL.design = {
 
       if (aRuleType in this.by_data &&
           ruleMapValue == icalrecur_iterator.CONTRACT) {
-        for (var bydatakey in this.by_data[aRuleType]) {
-          if (this.by_data[aRuleType][bydatakey] == v) {
+
+        var ruleType = this.by_data[aRuleType];
+
+        for (var bydatakey in ruleType) {
+          if (ruleType[bydatakey] == v) {
             pass = true;
             break;
           }
@@ -4504,14 +5022,14 @@ ICAL.design = {
     },
 
     check_contracting_rules: function check_contracting_rules() {
-      var dow = this.last.day_of_week();
+      var dow = this.last.dayOfWeek();
       var weekNo = this.last.week_number(this.rule.wkst);
-      var doy = this.last.day_of_year();
+      var doy = this.last.dayOfYear();
 
       return (this.check_contract_restriction("BYSECOND", this.last.second) &&
               this.check_contract_restriction("BYMINUTE", this.last.minute) &&
               this.check_contract_restriction("BYHOUR", this.last.hour) &&
-              this.check_contract_restriction("BYDAY", dow) &&
+              this.check_contract_restriction("BYDAY", icalrecur_iterator._wkdayMap[dow]) &&
               this.check_contract_restriction("BYWEEKNO", weekNo) &&
               this.check_contract_restriction("BYMONTHDAY", this.last.day) &&
               this.check_contract_restriction("BYMONTH", this.last.month) &&
@@ -4531,7 +5049,28 @@ ICAL.design = {
         }
       }
       return deftime;
+    },
+
+    /**
+     * Convert iterator into a serialize-able object.
+     * Will preserve current iteration sequence to ensure
+     * the seamless continuation of the recurrence rule.
+     */
+    toJSON: function() {
+      var result = Object.create(null);
+
+      result.initialized = this.initialized;
+      result.rule = this.rule.toJSON();
+      result.dtstart = this.dtstart.toJSON();
+      result.by_data = this.by_data;
+      result.days = this.days;
+      result.last = this.last.toJSON();
+      result.by_indices = this.by_indices;
+      result.occurrence_number = this.occurrence_number;
+
+      return result;
     }
+
   };
 
   icalrecur_iterator._wkdayMap = ["", "SU", "MO", "TU", "WE", "TH", "FR", "SA"];
@@ -4561,7 +5100,831 @@ ICAL.design = {
   icalrecur_iterator.CONTRACT = 1;
   icalrecur_iterator.EXPAND = 2;
   icalrecur_iterator.ILLEGAL = 3;
-})();
+
+  return icalrecur_iterator;
+
+}());
+ICAL.RecurExpansion = (function() {
+  function formatTime(item) {
+    return ICAL.helpers.formatClassType(item, ICAL.icaltime);
+  }
+
+  function compareTime(a, b) {
+    return a.compare(b);
+  }
+
+  function isRecurringComponent(comp) {
+    return comp.hasProperty('RDATE') ||
+           comp.hasProperty('RRULE') ||
+           comp.hasProperty('RECURRENCE-ID');
+  }
+
+  function propertyValue(prop) {
+    return prop.data.value[0];
+  }
+
+  /**
+   * Primary class for expanding recurring rules.
+   * Can take multiple RRULEs, RDATEs, EXDATE(s)
+   * and iterate (in order) over each next occurrence.
+   *
+   * Once initialized this class can also be serialized
+   * saved and continue iteration from the last point.
+   *
+   * NOTE: it is intended that this class is to be used
+   *       with ICAL.Event which handles recurrence exceptions.
+   *
+   * Options:
+   *  - startDate: (ICAL.icaltime) start time of event (required)
+   *  - component: (ICAL.icalcomponent) component (required unless resuming)
+   *
+   * Examples:
+   *
+   *    // assuming event is a parsed ical component
+   *    var event;
+   *
+   *    var expand = new ICAL.RecurExpansion({
+   *      component: event,
+   *      start: event.getFirstPropertyValue('DTSTART')
+   *    });
+   *
+   *    // remember there are infinite rules
+   *    // so its a good idea to limit the scope
+   *    // of the iterations then resume later on.
+   *
+   *    // next is always an ICAL.icaltime or null
+   *    var next;
+   *
+   *    while(someCondition && (next = expand.next())) {
+   *      // do something with next
+   *    }
+   *
+   *    // save instance for later
+   *    var json = JSON.stringify(expand);
+   *
+   *    //...
+   *
+   *    // NOTE: if the component's properties have
+   *    //       changed you will need to rebuild the
+   *    //       class and start over. This only works
+   *    //       when the component's recurrence info is the same.
+   *    var expand = new ICAL.RecurExpansion(JSON.parse(json));
+   *
+   *
+   * @param {Object} options see options block.
+   */
+  function RecurExpansion(options) {
+    this.ruleDates = [];
+    this.exDates = [];
+    this.fromData(options);
+  }
+
+  RecurExpansion.prototype = {
+
+    /**
+     * True when iteration is fully completed.
+     */
+    complete: false,
+
+    /**
+     * Array of RRULE iterators.
+     *
+     * @type Array[ICAL.icalrecur_iterator]
+     * @private
+     */
+    ruleIterators: null,
+
+    /**
+     * Array of RDATE instances.
+     *
+     * @type Array[ICAL.icaltime]
+     * @private
+     */
+    ruleDates: null,
+
+    /**
+     * Array of EXDATE instances.
+     *
+     * @type Array[ICAL.icaltime]
+     * @private
+     */
+    exDates: null,
+
+    /**
+     * Current position in ruleDates array.
+     * @type Numeric
+     * @private
+     */
+    ruleDateInc: 0,
+
+    /**
+     * Current position in exDates array
+     * @type Numeric
+     * @private
+     */
+    exDateInc: 0,
+
+    /**
+     * Current negative date.
+     *
+     * @type ICAL.icaltime
+     * @private
+     */
+    exDate: null,
+
+    /**
+     * Current additional date.
+     *
+     * @type ICAL.icaltime
+     * @private
+     */
+    ruleDate: null,
+
+    /**
+     * Start date of recurring rules.
+     *
+     * @type ICAL.icaltime
+     */
+    dtstart: null,
+
+    /**
+     * Last expanded time
+     *
+     * @type ICAL.icaltime
+     */
+    last: null,
+
+    fromData: function(options) {
+      var start = ICAL.helpers.formatClassType(options.dtstart, ICAL.icaltime);
+
+      if (!start) {
+        throw new Error('.dtstart (ICAL.icaltime) must be given');
+      } else {
+        this.dtstart = start;
+      }
+
+      if (options.component) {
+        this._init(options.component);
+      } else {
+        this.last = formatTime(options.last);
+
+        this.ruleIterators = options.ruleIterators.map(function(item) {
+          return ICAL.helpers.formatClassType(item, ICAL.icalrecur_iterator);
+        });
+
+        this.ruleDateInc = options.ruleDateInc;
+        this.exDateInc = options.exDateInc;
+
+        if (options.ruleDates) {
+          this.ruleDates = options.ruleDates.map(formatTime);
+          this.ruleDate = this.ruleDates[this.ruleDateInc];
+        }
+
+        if (options.exDates) {
+          this.exDates = options.exDates.map(formatTime);
+          this.exDate = this.exDates[this.exDateInc];
+        }
+
+        if (typeof(options.complete) !== 'undefined') {
+          this.complete = options.complete;
+        }
+      }
+    },
+
+    next: function() {
+      var iter;
+      var ruleOfDay;
+      var next;
+      var compare;
+
+      var maxTries = 500;
+      var currentTry = 0;
+
+      while (true) {
+        if (currentTry++ > maxTries) {
+          throw new Error(
+            'max tries have occured, rule may be impossible to forfill.'
+          );
+        }
+
+        next = this.ruleDate;
+        iter = this._nextRecurrenceIter(this.last);
+
+        // no more matches
+        // because we increment the rule day or rule
+        // _after_ we choose a value this should be
+        // the only spot where we need to worry about the
+        // end of events.
+        if (!next && !iter) {
+          // there are no more iterators or rdates
+          this.complete = true;
+          break;
+        }
+
+        // no next rule day or recurrence rule is first.
+        if (!next || (iter && next.compare(iter.last) > 0)) {
+          // must be cloned, recur will reuse the time element.
+          next = iter.last.clone();
+          // move to next so we can continue
+          iter.next();
+        }
+
+        // if the ruleDate is still next increment it.
+        if (this.ruleDate === next) {
+          this._nextRuleDay();
+        }
+
+        this.last = next;
+
+        // check the negative rules
+        if (this.exDate) {
+          compare = this.exDate.compare(this.last);
+
+          if (compare < 0) {
+            this._nextExDay();
+          }
+
+          // if the current rule is excluded skip it.
+          if (compare === 0) {
+            this._nextExDay();
+            continue;
+          }
+        }
+
+        //XXX: The spec states that after we resolve the final
+        //     list of dates we execute EXDATE this seems somewhat counter
+        //     intuitive to what I have seen most servers do so for now
+        //     I exclude based on the original date not the one that may
+        //     have been modified by the exception.
+        return this.last;
+      }
+    },
+
+    /**
+     * Converts object into a serialize-able format.
+     */
+    toJSON: function() {
+      function toJSON(item) {
+        return item.toJSON();
+      }
+
+      var result = Object.create(null);
+      result.ruleIterators = this.ruleIterators.map(toJSON);
+
+      if (this.ruleDates) {
+        result.ruleDates = this.ruleDates.map(toJSON);
+      }
+
+      if (this.exDates) {
+        result.exDates = this.exDates.map(toJSON);
+      }
+
+      result.ruleDateInc = this.ruleDateInc;
+      result.exDateInc = this.exDateInc;
+      result.last = this.last.toJSON();
+      result.dtstart = this.dtstart.toJSON();
+      result.complete = this.complete;
+
+      return result;
+    },
+
+
+    _extractDates: function(component, property) {
+      var result = [];
+      var props = component.getAllProperties(property);
+      var len = props.length;
+      var i = 0;
+      var prop;
+
+      var idx;
+
+      for (; i < len; i++) {
+        prop = propertyValue(props[i]);
+
+        idx = ICAL.helpers.binsearchInsert(
+          result,
+          prop,
+          compareTime
+        );
+
+        // ordered insert
+        result.splice(idx, 0, prop);
+      }
+
+      return result;
+    },
+
+    _init: function(component) {
+      this.ruleIterators = [];
+
+      this.last = this.dtstart.clone();
+
+      if (component.hasProperty('RRULE')) {
+        var rules = component.getAllProperties('RRULE');
+        var i = 0;
+        var len = rules.length;
+
+        var rule;
+        var iter;
+
+        for (; i < len; i++) {
+          rule = propertyValue(rules[i]);
+          rule = new ICAL.icalrecur(rule);
+          iter = rule.iterator(this.dtstart);
+          this.ruleIterators.push(iter);
+
+          // increment to the next occurrence so future
+          // calls to next return times beyond the initial iteration.
+          // XXX: I find this suspicious might be a bug?
+          iter.next();
+        }
+      }
+
+      if (component.hasProperty('RDATE')) {
+        this.ruleDates = this._extractDates(component, 'RDATE');
+        this.ruleDateInc = ICAL.helpers.binsearchInsert(
+          this.ruleDates,
+          this.last,
+          compareTime
+        );
+
+        this.ruleDate = this.ruleDates[this.ruleDateInc];
+      }
+
+      if (component.hasProperty('EXDATE')) {
+        this.exDates = this._extractDates(component, 'EXDATE');
+        // if we have a .last day we increment the index to beyond it.
+        this.exDateInc = ICAL.helpers.binsearchInsert(
+          this.exDates,
+          this.last,
+          compareTime
+        );
+
+        this.exDate = this.exDates[this.exDateInc];
+      }
+    },
+
+    _nextExDay: function() {
+      this.exDate = this.exDates[++this.exDateInc];
+    },
+
+    _nextRuleDay: function() {
+      this.ruleDate = this.ruleDates[++this.ruleDateInc];
+    },
+
+    /**
+     * Find and return the recurrence rule with the most
+     * recent event and return it.
+     *
+     * @return {Object} iterator.
+     */
+    _nextRecurrenceIter: function() {
+      var iters = this.ruleIterators;
+
+      if (iters.length === 0) {
+        return null;
+      }
+
+      var len = iters.length;
+      var iter;
+      var iterTime;
+      var iterIdx = 0;
+      var chosenIter;
+
+      // loop through each iterator
+      for (; iterIdx < len; iterIdx++) {
+        iter = iters[iterIdx];
+        iterTime = iter.last;
+
+        // if iteration is complete
+        // then we must exclude it from
+        // the search and remove it.
+        if (iter.completed) {
+          len--;
+          if (iterIdx !== 0) {
+            iterIdx--;
+          }
+          iters.splice(iterIdx, 1);
+          continue;
+        }
+
+        // find the most recent possible choice
+        if (!chosenIter || chosenIter.last.compare(iterTime) > 0) {
+          // that iterator is saved
+          chosenIter = iter;
+        }
+      }
+
+      // the chosen iterator is returned but not mutated
+      // this iterator contains the most recent event.
+      return chosenIter;
+    }
+
+  };
+
+  return RecurExpansion;
+
+}());
+ICAL.Event = (function() {
+
+  function Event(component, options) {
+    if (!(component instanceof ICAL.icalcomponent)) {
+      options = component;
+      component = null;
+    }
+
+    if (!component) {
+      this.component = new ICAL.icalcomponent({
+        name: 'VEVENT'
+      });
+    } else {
+      this.component = component;
+    }
+
+    this.exceptions = Object.create(null);
+
+    if (options && options.exceptions) {
+      options.exceptions.forEach(this.relateException, this);
+    }
+  }
+
+  Event.prototype = {
+
+    /**
+     * List of related event exceptions.
+     *
+     * @type Array[ICAL.Event]
+     */
+    exceptions: null,
+
+    /**
+     * Relates a given event exception to this object.
+     * If the given component does not share the UID of
+     * this event it cannot be related and will throw an
+     * exception.
+     *
+     * If this component is an exception it cannot have other
+     * exceptions related to it.
+     *
+     * @param {ICAL.icalcomponent|ICAL.Event} obj component or event.
+     */
+    relateException: function(obj) {
+      if (this.isRecurrenceException()) {
+        throw new Error('cannot relate exception to exceptions');
+      }
+
+      if (obj instanceof ICAL.icalcomponent) {
+        obj = new ICAL.Event(obj);
+      }
+
+      if (obj.uid !== this.uid) {
+        throw new Error('attempted to relate unrelated exception');
+      }
+
+      // we don't sort or manage exceptions directly
+      // here the recurrence expander handles that.
+      this.exceptions[obj.recurrenceId.toString()] = obj;
+    },
+
+    /**
+     * Returns the occurrence details based on its start time.
+     * If the occurrence has an exception will return the details
+     * for that exception.
+     *
+     * NOTE: this method is intend to be used in conjunction
+     *       with the #iterator method.
+     *
+     * @param {ICAL.icaltime} occurrence time occurrence.
+     */
+    getOccurrenceDetails: function(occurrence) {
+      var id = occurrence.toString();
+      var result = {
+        //XXX: Clone?
+        recurrenceId: occurrence
+      };
+
+      if (id in this.exceptions) {
+        var item = result.item = this.exceptions[id];
+        result.startDate = item.startDate;
+        result.endDate = item.endDate;
+        result.item = item;
+      } else {
+        var end = occurrence.clone();
+        end.addDuration(this.duration);
+
+        result.endDate = end;
+        result.startDate = occurrence;
+        result.item = this;
+      }
+
+      return result;
+    },
+
+    /**
+     * Builds a recur expansion instance for a specific
+     * point in time (defaults to startDate).
+     *
+     * @return {ICAL.RecurExpansion} expander object.
+     */
+    iterator: function(startTime) {
+      return new ICAL.RecurExpansion({
+        component: this.component,
+        dtstart: startTime || this.startDate
+      });
+    },
+
+    isRecurring: function() {
+      var comp = this.component;
+      return comp.hasProperty('RRULE') || comp.hasProperty('RDATE');
+    },
+
+    isRecurrenceException: function() {
+      return this.component.hasProperty('RECURRENCE-ID');
+    },
+
+    /**
+     * Returns the types of recurrences this event may have.
+     *
+     * Returned as an object with the following possible keys:
+     *
+     *    - YEARLY
+     *    - MONTHLY
+     *    - WEEKLY
+     *    - DAILY
+     *    - MINUTELY
+     *    - SECONDLY
+     *
+     * @return {Object} object of recurrence flags.
+     */
+    getRecurrenceTypes: function() {
+      var rules = this.component.getAllProperties('RRULE');
+      var i = 0;
+      var len = rules.length;
+      var result = Object.create(null);
+
+      for (; i < len; i++) {
+        result[rules[i].data.FREQ] = true;
+      }
+
+      return result;
+    },
+
+    get uid() {
+      return this._firstPropsValue('UID');
+    },
+
+    set uid(value) {
+      this._setProp('UID', value);
+    },
+
+    get startDate() {
+      return this._firstProp('DTSTART');
+    },
+
+    set startDate(value) {
+      this._setProp('DTSTART', value);
+    },
+
+    get endDate() {
+      return this._firstProp('DTEND');
+    },
+
+    set endDate(value) {
+      this._setProp('DTEND', value);
+    },
+
+    get duration() {
+      // cached because its dynamically calculated
+      // and may be frequently used. This could be problematic
+      // later if we modify the underlying start/endDate.
+      //
+      // When do add that functionality it should expire this cache...
+      if (typeof(this._duration) === 'undefined') {
+        this._duration = this.endDate.subtractDate(this.startDate);
+      }
+      return this._duration;
+    },
+
+    get location() {
+      return this._firstPropsValue('LOCATION');
+    },
+
+    set location(value) {
+      return this._setProp('LOCATION', value);
+    },
+
+    get attendees() {
+      //XXX: This is way lame we should have a better
+      //     data structure for this later.
+      return this.component.getAllProperties('ATTENDEE');
+    },
+
+    get summary() {
+      return this._firstPropsValue('SUMMARY');
+    },
+
+    set summary(value) {
+      this._setProp('SUMMARY', value);
+    },
+
+    get description() {
+      return this._firstPropsValue('DESCRIPTION');
+    },
+
+    set description(value) {
+      this._setProp('DESCRIPTION', value);
+    },
+
+    get organizer() {
+      return this._firstProp('ORGANIZER');
+    },
+
+    set organizer(value) {
+      this._setProp('ORGANIZER', value);
+    },
+
+    get sequence() {
+      return this._firstPropsValue('SEQUENCE');
+    },
+
+    set sequence(value) {
+      this._setProp('SEQUENCE', value);
+    },
+
+    get recurrenceId() {
+      return this._firstProp('RECURRENCE-ID');
+    },
+
+    set recurrenceId(value) {
+      this._setProp('RECURRENCE-ID', value);
+    },
+
+    _setProp: function(name, value) {
+      this.component.updatePropertyWithValue(name, value);
+    },
+
+    _firstProp: function(name) {
+      return this.component.getFirstPropertyValue(name);
+    },
+
+    /**
+     * Return the first property value.
+     * Most useful in cases where no properties
+     * are expected and the value will be a text type.
+     */
+    _firstPropsValue: function(name) {
+      var prop = this._firstProp(name);
+
+      if (prop && prop.data && prop.data.value) {
+        return prop.data.value[0];
+      }
+
+      return null;
+    },
+
+    toString: function() {
+      return this.component.toString();
+    }
+
+  };
+
+  return Event;
+
+}());
+ICAL.ComponentParser = (function() {
+
+  /**
+   * Component parser initializer.
+   *
+   * Usage:
+   *
+   *    var options = {
+   *      // when false no events will be emitted for type
+   *      parseEvent: true,
+   *      parseTimezone: true
+   *    };
+   *
+   *    var parser = new ICAL.ComponentParser(options);
+   *
+   *    parser.onevent() {
+   *      //...
+   *    }
+   *
+   *    // ontimezone, etc...
+   *
+   *    parser.oncomplete = function() {
+   *
+   *    };
+   *
+   *    parser.process(string | component);
+   *
+   *
+   * @param {Object} options component parser options.
+   */
+  function ComponentParser(options) {
+    if (typeof(options) === 'undefined') {
+      options = {};
+    }
+
+    var key;
+    for (key in options) {
+      if (options.hasOwnProperty(key)) {
+        this[key] = options[key];
+      }
+    }
+  }
+
+  ComponentParser.prototype = {
+
+    /**
+     * When true parse events
+     *
+     * @type Boolean
+     */
+    parseEvent: true,
+
+    /**
+     * when true parse timezones
+     *
+     * @type Boolean
+     */
+    parseTimezone: true,
+
+
+    /* SAX like events here for reference */
+
+    /**
+     * Fired when parsing is complete
+     */
+    oncomplete: function() {},
+
+    /**
+     * Fired if an error occurs during parsing.
+     *
+     * @param {Error} err details of error.
+     */
+    onerror: function(err) {},
+
+    /**
+     * Fired when a top level component (vtimezone) is found
+     *
+     * @param {ICAL.icaltimezone} timezone object.
+     */
+    ontimezone: function(component) {},
+
+    /*
+     * Fired when a top level component (VEVENT) is found.
+     * @param {ICAL.Event} component top level component.
+     */
+    onevent: function(component) {},
+
+    /**
+     * Process a string or parse ical object.
+     * This function itself will return nothing but
+     * will start the parsing process.
+     *
+     * Events must be registered prior to calling this method.
+     *
+     * @param {String|Object} ical string or parsed ical object.
+     */
+    process: function(ical) {
+      //TODO: this is sync now in the future we will have a incremental parser.
+      if (typeof(ical) === 'string') {
+        ical = ICAL.parse(ical);
+      }
+
+      if (!(ical instanceof ICAL.icalcomponent)) {
+        ical = new ICAL.icalcomponent(ical);
+      }
+
+      var components = ical.getAllSubcomponents();
+      var i = 0;
+      var len = components.length;
+      var component;
+
+      for (; i < len; i++) {
+        component = components[i];
+
+        switch (component.name) {
+          case 'VEVENT':
+            if (this.parseEvent) {
+              this.onevent(new ICAL.Event(component));
+            }
+            break;
+          default:
+            continue;
+        }
+      }
+
+      //XXX: ideally we should do a "nextTick" here
+      //     so in all cases this is actually async.
+      this.oncomplete();
+    }
+  };
+
+  return ComponentParser;
+
+}());
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -4611,3 +5974,4 @@ ICAL.design = {
     return state.currentData;
   };
 }());
+

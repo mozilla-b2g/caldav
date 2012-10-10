@@ -58,7 +58,6 @@ test-node:
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
 		test/caldav/sax/*_test.js \
-		test/caldav/templates/*_test.js \
 		test/caldav/request/*_test.js \
 		test/caldav/*_test.js
 

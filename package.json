@@ -18,10 +18,12 @@
     "xmlhttprequest": "1.4.2"
   },
   "devDependencies": {
+    "debug": "~0.7",
     "mocha": "~1.1",
     "chai": "~1.0",
     "test-agent": "~0.6",
-    "http-proxy": "~0.8"
+    "http-proxy": "~0.8",
+    "commander": "~1.0"
   },
   "license": "MIT",
   "engine": {
