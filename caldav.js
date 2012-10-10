@@ -3116,9 +3116,7 @@ function write (chunk) {
 
         for (url in root) {
           collection = root[url];
-
           resources = collection.resourcetype;
-
           if (resources.value.forEach) {
 
             resources.value.forEach(function(type) {
