@@ -3,3 +3,5 @@ node_modules
 data/
 vendor/
 sandbox/
+.gitignore
+test/servers/servers.json
