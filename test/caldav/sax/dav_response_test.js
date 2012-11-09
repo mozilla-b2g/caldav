@@ -85,7 +85,9 @@ suite('caldav/sax/dav_response', function() {
 
         'principal-URL': {
           status: '200',
-          value: '/calendar/pinc/'
+          value: {
+            href: '/calendar/pinc/'
+          }
         },
 
         resourcetype: {
@@ -98,7 +100,7 @@ suite('caldav/sax/dav_response', function() {
 
         'current-user-principal': {
           status: '404',
-          value: null
+          value: {}
         }
       },
 
