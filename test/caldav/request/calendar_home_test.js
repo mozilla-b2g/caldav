@@ -9,6 +9,7 @@ suite('caldav/request/propfind', function() {
   var MockRequest;
   var MockPropfind;
   var Home;
+  var Errors;
   var subject;
   var con;
 
@@ -19,6 +20,7 @@ suite('caldav/request/propfind', function() {
     Connection = Caldav.require('connection');
     Home = Caldav.require('request/calendar_home');
     MockRequest = Caldav.require('support/mock_request');
+    Errors = Caldav.require('request/errors');
   });
 
   suiteSetup(function() {
@@ -74,7 +76,7 @@ suite('caldav/request/propfind', function() {
         response[url] = {
           'current-user-principal': {
             status: '200',
-            value: 'foo.com/'
+            value: { href:'foo.com/' }
           }
         };
 
@@ -94,7 +96,7 @@ suite('caldav/request/propfind', function() {
           },
           'principal-URL': {
             status: '200',
-            value: 'bar.com/'
+            value: { href: 'bar.com/' }
           }
         };
 
@@ -102,6 +104,24 @@ suite('caldav/request/propfind', function() {
 
         assert.equal(data, 'bar.com/');
       });
+      
+      test('unauthenticated', function() {
+        var req = request('_findPrincipal');
+
+        response[url] = {
+          'principal-URL': {
+            status: '200',
+            value: {
+              unauthenticated: {}
+            }
+          }
+        };
+        
+        req.respond(null, response);
+
+        assert.equal(true, err instanceof Errors.UnauthenticatedError);
+      });
+      
     });
 
     suite('#_findCalendarHome', function() {
