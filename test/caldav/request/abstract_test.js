@@ -83,9 +83,9 @@ suite('caldav/request/abstract.js', function() {
         xhr = getXhr();
         xhr.respond('NOT XML <div>', 500);
       });
-
+      
       test('on response', function() {
-        assert.match(calledWith[0].message, /http error/);
+        assert.equal(calledWith[0].code, 500);
       });
     });
 
