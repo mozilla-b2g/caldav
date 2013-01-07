@@ -202,6 +202,49 @@ suite('webacls/xhr', function() {
 
   });
 
+  suite('requests real files', function() {
+    function request(path) {
+      path = 'fixtures/' + path;
+
+      if (typeof(__dirname) !== 'undefined') {
+        path = 'file://' + __dirname + '/' + path;
+      } else {
+        path = '/test/caldav/' + path;
+      }
+
+      return new Xhr({ url: path });
+    }
+
+    test('get', function(done) {
+      subject = request('file.txt');
+      subject.send(function(err, xhr) {
+        var data = xhr.responseText;
+        assert.equal(data.trim(), 'file');
+        done();
+      });
+    });
+
+    test('.ondata', function(done) {
+      var subject = request('long.txt');
+      var gotData = '';
+
+      subject.ondata = function(chunk) {
+        gotData += chunk;
+      };
+
+      subject.send(function(err, xhr) {
+        var data = xhr.responseText;
+
+        assert.equal(
+          data.trim(),
+          gotData.trim(),
+          'sends ondata'
+        );
+
+        done();
+      });
+    });
+
+  });
+
 });
-
-
