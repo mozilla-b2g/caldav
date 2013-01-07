@@ -36,16 +36,6 @@ suite('webacls/xhr', function() {
       teardown(function() {
         Xhr.prototype.globalXhrOptions = old;
       });
-
-      test('constructed xhr', function() {
-        var subject = new Xhr({
-          method: 'POST',
-          xhrClass: FakeXhr
-        });
-        subject.send(function() {});
-        assert.ok(subject.xhr);
-        assert.equal(subject.xhr.constructorArgs[0], opts);
-      });
     });
   });
 
@@ -62,33 +52,6 @@ suite('webacls/xhr', function() {
     assert.equal(
       subject._credentials(user, password), expected
     );
-  });
-
-  suite('.abort', function() {
-    suite('when there is an xhr object', function() {
-      var aborted;
-
-      setup(function() {
-        aborted = false;
-        subject.xhr = {
-          abort: function() {
-            aborted = true;
-          }
-        };
-        subject.abort();
-      });
-
-      test('should call abort on the xhr object', function() {
-        assert.equal(aborted, true);
-      });
-    });
-
-    suite('when there is no xhr object', function() {
-      test('should not fail', function() {
-        subject.xhr = null;
-        subject.abort();
-      });
-    });
   });
 
   suite('.send', function() {
@@ -108,63 +71,8 @@ suite('webacls/xhr', function() {
       subject = new Xhr(options);
     }
 
-    function opensXHR() {
-      test('should create xhr', function() {
-        assert.instanceOf(subject.xhr, FakeXhr);
-      });
-
-      test('should set headers', function() {
-        assert.deepEqual(subject.xhr.headers, subject.headers);
-      });
-
-      test('should parse and send data', function() {
-        assert.deepEqual(subject.xhr.sendArgs[0], data);
-      });
-
-      test('should open xhr', function() {
-        assert.deepEqual(subject.xhr.openArgs, [
-          subject.method,
-          subject.url,
-          subject.async,
-          subject.user,
-          subject.password
-        ]);
-      });
-    }
-
     setup(function() {
       responseXhr = null;
-    });
-
-    test('with mozSystem', function() {
-      if (typeof(window) === 'undefined')
-        return;
-
-      var user = 'user';
-      var password = 'pass';
-      var url = '/foo';
-
-      request({
-        globalXhrOptions: { mozSystem: true },
-        user: user,
-        password: password,
-        method: 'GET',
-        url: url
-      });
-
-
-      subject.send(function() {});
-      var args = subject.xhr.openArgs;
-
-      assert.deepEqual(
-        args,
-        ['GET', url, true]
-      );
-
-      assert.equal(
-        subject.xhr.headers['Authorization'],
-        subject._credentials(user, password)
-      );
     });
 
     suite('when xhr is a success and responds /w data', function() {
@@ -178,12 +86,11 @@ suite('webacls/xhr', function() {
           method: 'PUT'
         });
         cb = callback.bind(this, done);
-        subject.send(cb);
+        xhr = subject.send(cb);
 
         //should be waiting inbetween requests
         assert.equal(subject.waiting, true);
 
-        xhr = subject.xhr;
         xhr.readyState = 4;
         xhr.responseText = response;
         xhr.onreadystatechange();
@@ -192,12 +99,6 @@ suite('webacls/xhr', function() {
       test('should not be waiting after response', function() {
         assert.equal(subject.waiting, false);
       });
-
-      test('should send callback parsed data and xhr', function() {
-        assert.equal(responseXhr, subject.xhr);
-      });
-
-      opensXHR();
     });
 
   });
