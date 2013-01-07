@@ -1425,6 +1425,10 @@ function write (chunk) {
       return this._parse.write(chunk);
     },
 
+    close: function() {
+      this._parse.close();
+    },
+
     get closed() {
       return this._parse.closed;
     },
@@ -2691,12 +2695,16 @@ function write (chunk) {
       var req = this.xhr;
       req.data = this._createPayload();
 
+      req.ondata = function xhrOnData(chunk) {
+        self.sax.write(chunk);
+      };
+
       // in the future we may stream data somehow
       req.send(function xhrResult() {
         var xhr = req.xhr;
         if (xhr.status > 199 && xhr.status < 300) {
           // success
-          self.sax.write(xhr.responseText).close();
+          self.sax.close();
           self._processResult(req, callback);
         } else {
           // fail
