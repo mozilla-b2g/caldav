@@ -64,8 +64,10 @@ suite('caldav/sax/dav_response', function() {
         var event = response['event.ics'];
         assert.ok(event);
 
-        assert.ok(event['calendar-data'].value.name, 'name');
-        assert.ok(event['calendar-data'].value.value, 'value');
+        assert.ok(event['calendar-data'], 'has calendar data');
+        assert.ok(
+          event['calendar-data'].value instanceof Array, 'ical is parsed'
+        );
         done();
       });
 
