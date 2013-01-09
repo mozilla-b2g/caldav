@@ -104,7 +104,7 @@ suite('webacls/xhr', function() {
   });
 
   suite('requests real files', function() {
-    function request(path) {
+    function request(path, globalOptions) {
       path = 'fixtures/' + path;
 
       if (typeof(__dirname) !== 'undefined') {
@@ -113,7 +113,7 @@ suite('webacls/xhr', function() {
         path = '/test/caldav/' + path;
       }
 
-      return new Xhr({ url: path });
+      return new Xhr({ url: path, globalXhrOptions: globalOptions });
     }
 
     test('get', function(done) {
@@ -125,27 +125,56 @@ suite('webacls/xhr', function() {
       });
     });
 
-    test('.ondata', function(done) {
-      var subject = request('long.txt');
-      var gotData = '';
+    suite('.ondata', function() {
+      var expected;
+      var file = 'long.txt';
 
-      subject.ondata = function(chunk) {
-        gotData += chunk;
-      };
+      setup(function(done) {
+        if (expected) {
+          done();
+        }
 
-      subject.send(function(err, xhr) {
-        var data = xhr.responseText;
-
-        assert.equal(
-          data.trim(),
-          gotData.trim(),
-          'sends ondata'
-        );
-
-        done();
+        var req = request(file);
+        req.send(function(err, xhr) {
+          expected = xhr.responseText;
+          done();
+        });
       });
-    });
 
+      if (this.navigator && navigator.userAgent.indexOf('Mozilla') !== -1) {
+        test('.ondata with chunked', function(done) {
+          var subject = request('long.txt', { useMozChunkedText: true });
+          var gotData = '';
+
+          subject.ondata = function(chunk) {
+            gotData += chunk;
+          };
+
+          var xhr = subject.send(function(err, xhr) {
+            assert.ok(!xhr.responseText);
+            assert.equal(xhr.responseType, 'moz-chunked-text');
+            assert.equal(expected, gotData);
+            done();
+          });
+        });
+      }
+
+      test('.ondata', function(done) {
+        var subject = request(file);
+        var gotData = '';
+
+        subject.ondata = function(chunk) {
+          gotData += chunk;
+        };
+
+        subject.send(function(err, xhr) {
+          assert.equal(expected, gotData);
+          done();
+        });
+      });
+
+
+    });
   });
 
 });

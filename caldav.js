@@ -2068,7 +2068,6 @@ function write (chunk) {
       } else {
         xhr = new this.xhrClass();
       }
-
       // This hack is in place due to some platform
       // bug in gecko when using mozSystem xhr
       // the credentials only seem to work as expected
@@ -2081,6 +2080,12 @@ function write (chunk) {
           this.user,
           this.password
         ));
+      }
+
+      var useMozChunkedText = false;
+      if (this.globalXhrOptions && this.globalXhrOptions.useMozChunkedText) {
+        useMozChunkedText = true;
+        xhr.responseType = 'moz-chunked-text';
       }
 
       for (header in this.headers) {
@@ -2096,13 +2101,20 @@ function write (chunk) {
       if ('onprogress' in xhr) {
         hasProgressEvents = true;
         var last = 0;
-        xhr.onprogress = function onProgress(event) {
-          var chunk = xhr.responseText.substr(last, event.loaded);
-          last = event.loaded;
-          if (this.ondata) {
-            this.ondata(chunk);
-          }
-        }.bind(this);
+
+        if (useMozChunkedText) {
+          xhr.onprogress = function onChunkedProgress(event) {
+            this.ondata(xhr.responseText);
+          }.bind(this);
+        } else {
+          xhr.onprogress = function onProgress(event) {
+            var chunk = xhr.responseText.substr(last, event.loaded);
+            last = event.loaded;
+            if (this.ondata) {
+              this.ondata(chunk);
+            }
+          }.bind(this);
+        }
       }
 
       xhr.onreadystatechange = function onReadyStateChange() {
