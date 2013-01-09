@@ -79,11 +79,10 @@ suite('caldav/request/abstract.js', function() {
           done();
         });
 
-
         xhr = getXhr();
         xhr.respond('NOT XML <div>', 500);
       });
-      
+
       test('on response', function() {
         assert.equal(calledWith[0].code, 500);
       });
@@ -110,7 +109,6 @@ suite('caldav/request/abstract.js', function() {
             item: { value: 'value' }
           }
         });
-        assert.equal(calledWith[2].xhr, xhr);
       });
     });
   });

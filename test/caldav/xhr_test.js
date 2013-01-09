@@ -36,16 +36,6 @@ suite('webacls/xhr', function() {
       teardown(function() {
         Xhr.prototype.globalXhrOptions = old;
       });
-
-      test('constructed xhr', function() {
-        var subject = new Xhr({
-          method: 'POST',
-          xhrClass: FakeXhr
-        });
-        subject.send(function() {});
-        assert.ok(subject.xhr);
-        assert.equal(subject.xhr.constructorArgs[0], opts);
-      });
     });
   });
 
@@ -62,33 +52,6 @@ suite('webacls/xhr', function() {
     assert.equal(
       subject._credentials(user, password), expected
     );
-  });
-
-  suite('.abort', function() {
-    suite('when there is an xhr object', function() {
-      var aborted;
-
-      setup(function() {
-        aborted = false;
-        subject.xhr = {
-          abort: function() {
-            aborted = true;
-          }
-        };
-        subject.abort();
-      });
-
-      test('should call abort on the xhr object', function() {
-        assert.equal(aborted, true);
-      });
-    });
-
-    suite('when there is no xhr object', function() {
-      test('should not fail', function() {
-        subject.xhr = null;
-        subject.abort();
-      });
-    });
   });
 
   suite('.send', function() {
@@ -108,63 +71,8 @@ suite('webacls/xhr', function() {
       subject = new Xhr(options);
     }
 
-    function opensXHR() {
-      test('should create xhr', function() {
-        assert.instanceOf(subject.xhr, FakeXhr);
-      });
-
-      test('should set headers', function() {
-        assert.deepEqual(subject.xhr.headers, subject.headers);
-      });
-
-      test('should parse and send data', function() {
-        assert.deepEqual(subject.xhr.sendArgs[0], data);
-      });
-
-      test('should open xhr', function() {
-        assert.deepEqual(subject.xhr.openArgs, [
-          subject.method,
-          subject.url,
-          subject.async,
-          subject.user,
-          subject.password
-        ]);
-      });
-    }
-
     setup(function() {
       responseXhr = null;
-    });
-
-    test('with mozSystem', function() {
-      if (typeof(window) === 'undefined')
-        return;
-
-      var user = 'user';
-      var password = 'pass';
-      var url = '/foo';
-
-      request({
-        globalXhrOptions: { mozSystem: true },
-        user: user,
-        password: password,
-        method: 'GET',
-        url: url
-      });
-
-
-      subject.send(function() {});
-      var args = subject.xhr.openArgs;
-
-      assert.deepEqual(
-        args,
-        ['GET', url, true]
-      );
-
-      assert.equal(
-        subject.xhr.headers['Authorization'],
-        subject._credentials(user, password)
-      );
     });
 
     suite('when xhr is a success and responds /w data', function() {
@@ -178,12 +86,11 @@ suite('webacls/xhr', function() {
           method: 'PUT'
         });
         cb = callback.bind(this, done);
-        subject.send(cb);
+        xhr = subject.send(cb);
 
         //should be waiting inbetween requests
         assert.equal(subject.waiting, true);
 
-        xhr = subject.xhr;
         xhr.readyState = 4;
         xhr.responseText = response;
         xhr.onreadystatechange();
@@ -192,18 +99,12 @@ suite('webacls/xhr', function() {
       test('should not be waiting after response', function() {
         assert.equal(subject.waiting, false);
       });
-
-      test('should send callback parsed data and xhr', function() {
-        assert.equal(responseXhr, subject.xhr);
-      });
-
-      opensXHR();
     });
 
   });
 
   suite('requests real files', function() {
-    function request(path) {
+    function request(path, globalOptions) {
       path = 'fixtures/' + path;
 
       if (typeof(__dirname) !== 'undefined') {
@@ -212,7 +113,7 @@ suite('webacls/xhr', function() {
         path = '/test/caldav/' + path;
       }
 
-      return new Xhr({ url: path });
+      return new Xhr({ url: path, globalXhrOptions: globalOptions });
     }
 
     test('get', function(done) {
@@ -224,27 +125,56 @@ suite('webacls/xhr', function() {
       });
     });
 
-    test('.ondata', function(done) {
-      var subject = request('long.txt');
-      var gotData = '';
+    suite('.ondata', function() {
+      var expected;
+      var file = 'long.txt';
 
-      subject.ondata = function(chunk) {
-        gotData += chunk;
-      };
+      setup(function(done) {
+        if (expected) {
+          done();
+        }
 
-      subject.send(function(err, xhr) {
-        var data = xhr.responseText;
-
-        assert.equal(
-          data.trim(),
-          gotData.trim(),
-          'sends ondata'
-        );
-
-        done();
+        var req = request(file);
+        req.send(function(err, xhr) {
+          expected = xhr.responseText;
+          done();
+        });
       });
-    });
 
+      if (this.navigator && navigator.userAgent.indexOf('Mozilla') !== -1) {
+        test('.ondata with chunked', function(done) {
+          var subject = request('long.txt', { useMozChunkedText: true });
+          var gotData = '';
+
+          subject.ondata = function(chunk) {
+            gotData += chunk;
+          };
+
+          var xhr = subject.send(function(err, xhr) {
+            assert.ok(!xhr.responseText);
+            assert.equal(xhr.responseType, 'moz-chunked-text');
+            assert.equal(expected, gotData);
+            done();
+          });
+        });
+      }
+
+      test('.ondata', function(done) {
+        var subject = request(file);
+        var gotData = '';
+
+        subject.ondata = function(chunk) {
+          gotData += chunk;
+        };
+
+        subject.send(function(err, xhr) {
+          assert.equal(expected, gotData);
+          done();
+        });
+      });
+
+
+    });
   });
 
 });
