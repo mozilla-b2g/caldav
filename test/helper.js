@@ -173,6 +173,7 @@
     testSupport.lib('sax');
     testSupport.lib('sax/base');
     testSupport.lib('sax/dav_response');
+    testSupport.lib('request/errors');
     testSupport.lib('request/abstract');
     testSupport.lib('template');
     testSupport.helper('fake_xhr');
