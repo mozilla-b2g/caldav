@@ -2527,8 +2527,7 @@ function write (chunk) {
 
     oncomplete: function() {
       var propstat = this.stack[this.stack.length - 1];
-      var hash = propstat.propstat;
-
+      propstat = propstat.propstat;
       var key;
       var status = this.current.status;
       var props = this.current.prop;
@@ -2536,20 +2535,13 @@ function write (chunk) {
       delete this.current.status;
       delete this.current.prop;
 
-      var hasProps = false;
-
       for (key in props) {
-        hasProps = true;
         if (Object.hasOwnProperty.call(props, key)) {
-          hash[key] = {
+          propstat[key] = {
             status: status,
             value: props[key]
           };
         }
-      }
-
-      if (!hasProps) {
-        propstat.propstat = false;
       }
     }
   });
