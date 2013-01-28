@@ -83,9 +83,8 @@ suite('caldav/sax/dav_response', function() {
     });
 
     expected = {
-      '/calendar/fake/': false,
-
       '/calendar/user/': {
+
         'principal-URL': {
           status: '200',
           value: {
@@ -136,7 +135,7 @@ suite('caldav/sax/dav_response', function() {
             '/calendar/user/',
             expected['/calendar/user/']
           ],
-          response[1],
+          response[0],
           '/calendar/user/ response'
         );
 
@@ -145,7 +144,7 @@ suite('caldav/sax/dav_response', function() {
             '/calendar/other',
             expected['/calendar/other']
           ],
-          response[2],
+          response[1],
           '/calendar/other/ response'
         );
 
