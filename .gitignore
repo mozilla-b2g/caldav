@@ -1,7 +1,10 @@
-node_modules
 .DS_Store
-data/
-vendor/
-sandbox/
-.gitignore
-test/servers/servers.json
+
+/data/
+/node_modules/
+/sandbox/
+/vendor/
+
+/test/servers/servers.json
+/test-agent/config.json
+
