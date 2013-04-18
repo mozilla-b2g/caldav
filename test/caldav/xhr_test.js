@@ -76,10 +76,9 @@ suite('webacls/xhr', function() {
     });
 
     suite('when xhr is a success and responds /w data', function() {
-      var response = '<html></html>', cb;
+      var response = '<html></html>', cb, xhr;
 
       setup(function(done) {
-        var xhr;
         request({
           data: data,
           url: url,
@@ -88,8 +87,8 @@ suite('webacls/xhr', function() {
         cb = callback.bind(this, done);
         xhr = subject.send(cb);
 
-        //should be waiting inbetween requests
-        assert.equal(subject.waiting, true);
+        // should be waiting inbetween requests
+        assert.deepEqual(subject.waiting, true);
 
         xhr.readyState = 4;
         xhr.responseText = response;
@@ -101,6 +100,35 @@ suite('webacls/xhr', function() {
       });
     });
 
+    suite('when abort is called on the request', function() {
+      var aborted, xhr;
+
+      setup(function() {
+        request({
+          data: data,
+          url: url,
+          method: 'PUT'
+        });
+        xhr = subject.send(callback);
+
+        // should be waiting inbetween requests
+        assert.deepEqual(subject.waiting, true);
+
+        aborted = false;
+      });
+
+      test('underlying request should be aborted', function(done) {
+        xhr.abort = function() {
+          aborted = true;
+        };
+
+        subject.abort(function() {
+          assert.deepEqual(true, aborted);
+          assert.deepEqual(false, subject.waiting);
+          done();
+        });
+      });
+    });
   });
 
   suite('requests real files', function() {

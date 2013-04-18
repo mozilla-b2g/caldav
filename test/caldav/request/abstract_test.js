@@ -70,6 +70,13 @@ suite('caldav/request/abstract.js', function() {
       return FakeXhr.instances.pop();
     }
 
+    test('should return a Caldav.Xhr object', function() {
+      var req = subject.send(function() {});
+      assert.deepEqual(url, req.url)
+      assert.deepEqual(con.user, req.user);
+      assert.deepEqual(con.password, req.password);
+    });
+
     suite('error', function() {
       var calledWith;
 
