@@ -31,6 +31,8 @@ suite('caldav', function() {
     assert.ok(root.Connection, 'Caldav.Connection');
     assert.ok(root.Resources, 'Caldav.Resources');
     assert.ok(root.Resources.Calendar, 'Calendar.Resources.Calendar');
+    assert.ok(root.OAuth2, 'OAuth2');
+    assert.ok(root.Http, 'Http');
   });
 
 });

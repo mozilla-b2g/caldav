@@ -17,10 +17,14 @@ package: test-agent-config
 	echo '/* caldav.js - https://github.com/mozilla-b2g/caldav */' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/querystring.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/query_builder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/xhr.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/oauth2.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/http/basic_auth.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/http/oauth2.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/connection.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/base.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
@@ -32,13 +36,11 @@ package: test-agent-config
 	cat $(LIB_ROOT)/request/calendar_query.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/calendar_home.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/resources.js >> $(WEB_FILE)
-
+	cat $(LIB_ROOT)/http/index.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/request/index.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/index.js >> $(WEB_FILE)
-
 	cat $(LIB_ROOT)/resources/calendar.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/resources/index.js >> $(WEB_FILE)
-
 	cat $(LIB_ROOT)/index.js >> $(WEB_FILE)
 
 test: test-node test-browser
@@ -54,6 +56,7 @@ test-node:
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
 		test/caldav/sax/*_test.js \
+		test/caldav/http/*_test.js \
 		test/caldav/request/*_test.js \
 		test/caldav/*_test.js
 
