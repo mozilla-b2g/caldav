@@ -2176,8 +2176,12 @@ function write (chunk) {
     XHR.call(this, clone);
   }
 
+  BasicAuth.requiresIntialAuth = false;
+
   BasicAuth.prototype = {
-    __proto__: XHR.prototype
+    __proto__: XHR.prototype,
+
+    requiresIntialAuth: false
   };
 
 
@@ -2189,6 +2193,40 @@ function write (chunk) {
     [Caldav('http/basic_auth'), Caldav] :
     [module, require('../caldav')]
 ));
+
+(function(module, ns) {
+
+  var XHR = ns.require('xhr');
+
+  function GoogleOauth(connection, options) {
+    // create a clone of options
+    var clone = Object.create(null);
+
+    if (typeof(options) !== 'undefined') {
+      for (var key in options) {
+        clone[key] = options[key];
+      }
+    }
+
+    XHR.call(this, clone);
+  }
+
+  GoogleOauth.requiresIntialAuth = true;
+
+  GoogleOauth.prototype = {
+    __proto__: XHR.prototype
+  };
+
+
+  module.exports = GoogleOauth;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('http/google_oauth'), Caldav] :
+    [module, require('../caldav')]
+));
+
 
 (function(module, ns) {
 
@@ -2222,6 +2260,10 @@ function write (chunk) {
       }
     }
 
+    var httpHandler = this.httpHandler || 'basic_auth';
+    if (typeof(httpHandler) !== 'object') {
+      this.httpHandler = Caldav.require('http/' + httpHandler);
+    }
   }
 
   Connection.prototype = {
@@ -2240,6 +2282,10 @@ function write (chunk) {
      */
     domain: '',
 
+    get requiresIntialAuth() {
+      return this.httpHandler.requiresIntialAuth;
+    },
+
     /**
      * Creates new XHR request based on default
      * options for connection.
@@ -2247,12 +2293,6 @@ function write (chunk) {
      * @return {Caldav.Xhr} http request set with default options.
      */
     request: function(options) {
-      var authType = this.authType || 'basic_auth';
-
-      if (typeof(authType) !== 'object') {
-        authType = Caldav.require('http/' + authType);
-      }
-
       if (options) {
         if (options.url && options.url.indexOf('http') !== 0) {
           var url = options.url;
@@ -2263,7 +2303,7 @@ function write (chunk) {
         }
       }
 
-      return new authType(this, options);
+      return new this.httpHandler(this, options);
     }
 
   };
@@ -2732,6 +2772,10 @@ function write (chunk) {
 
       // in the future we may stream data somehow
       req.send(function xhrResult(err, xhr) {
+        if (err) {
+          return callback(err);
+        }
+
         if (xhr.status > 199 && xhr.status < 300) {
           // success
           self.sax.close();
@@ -3139,15 +3183,14 @@ function write (chunk) {
         if (!principal) {
           principal = findProperty('principal-URL', data, true);
         }
-        
+
         if ('unauthenticated' in principal) {
-          callback(new Errors.UnauthenticatedError());          
-        } else if (principal.href){
+          callback(new Errors.UnauthenticatedError());
+        } else if (principal.href) {
           callback(null, principal.href);
         } else {
           callback(new Errors.CaldavHttpError(404));
         }
-     
       });
     },
 

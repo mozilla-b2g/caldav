@@ -169,6 +169,8 @@
   requireRequest = function(callback) {
     testSupport.lib('responder');
     testSupport.lib('xhr');
+    testSupport.lib('http/basic_auth');
+    testSupport.lib('http/google_oauth');
     testSupport.lib('connection');
     testSupport.lib('sax');
     testSupport.lib('sax/base');

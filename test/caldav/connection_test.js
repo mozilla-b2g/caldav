@@ -1,6 +1,7 @@
 testSupport.lib('xhr');
 testSupport.lib('connection');
 testSupport.lib('http/basic_auth');
+testSupport.lib('http/google_oauth');
 
 suite('caldav/connection', function() {
 
@@ -42,9 +43,18 @@ suite('caldav/connection', function() {
 
       assert.equal(subject.domain, domain, 'should remove trailing slash');
     });
-
   });
 
+  suite('.requiresIntialAuth', function() {
+    test('basic auth', function() {
+      assert.isFalse(subject.requiresIntialAuth);
+    });
+
+    test('google oauth', function() {
+      subject = new Connection({ httpHandler: 'google_oauth' });
+      assert.isTrue(subject.requiresIntialAuth);
+    });
+  });
 
   suite('#request', function() {
 

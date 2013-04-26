@@ -16,4 +16,5 @@ suite('caldav/querystring', function() {
 
     assert.equal(QueryString.stringify(input), expected);
   });
+
 });

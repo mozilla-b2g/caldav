@@ -27,6 +27,7 @@ package: test-agent-config
 	cat $(LIB_ROOT)/query_builder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/xhr.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/http/basic_auth.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/http/google_oauth.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/connection.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/base.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
