@@ -2156,6 +2156,44 @@ function write (chunk) {
 
   var XHR = ns.require('xhr');
 
+  function BasicAuth(connection, options) {
+    // create a clone of options
+    var clone = Object.create(null);
+
+    if (typeof(options) !== 'undefined') {
+      for (var key in options) {
+        clone[key] = options[key];
+      }
+    }
+
+    // add the appropriate options (user/password)
+    if (connection.password)
+      clone.password = connection.password;
+
+    if (connection.user)
+      clone.user = connection.user;
+
+    XHR.call(this, clone);
+  }
+
+  BasicAuth.prototype = {
+    __proto__: XHR.prototype
+  };
+
+
+  module.exports = BasicAuth;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('http/basic_auth'), Caldav] :
+    [module, require('../caldav')]
+));
+
+(function(module, ns) {
+
+  var XHR = ns.require('xhr');
+
   /**
    * Connection objects contain
    * general information to be reused
@@ -2209,35 +2247,23 @@ function write (chunk) {
      * @return {Caldav.Xhr} http request set with default options.
      */
     request: function(options) {
-      if (typeof(options) === 'undefined') {
-        options = {};
+      var authType = this.authType || 'basic_auth';
+
+      if (typeof(authType) !== 'object') {
+        authType = Caldav.require('http/' + authType);
       }
 
-      var copy = {};
-      var key;
-      // copy options
-
-      for (key in options) {
-        copy[key] = options[key];
-      }
-
-      if (!copy.user) {
-        copy.user = this.user;
-      }
-
-      if (!copy.password) {
-        copy.password = this.password;
-      }
-
-      if (copy.url && copy.url.indexOf('http') !== 0) {
-        var url = copy.url;
-        if (url.substr(0, 1) !== '/') {
-          url = '/' + url;
+      if (options) {
+        if (options.url && options.url.indexOf('http') !== 0) {
+          var url = options.url;
+          if (url.substr(0, 1) !== '/') {
+            url = '/' + url;
+          }
+          options.url = this.domain + url;
         }
-        copy.url = this.domain + url;
       }
 
-      return new XHR(copy);
+      return new authType(this, options);
     }
 
   };
@@ -3468,6 +3494,7 @@ function write (chunk) {
   exports.Request = ns.require('request');
   exports.Connection = ns.require('connection');
   exports.Resources = ns.require('resources');
+  exports.Http = ns.require('http');
 
 }.apply(
   this,

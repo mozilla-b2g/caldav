@@ -26,6 +26,7 @@ package: test-agent-config
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/query_builder.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/xhr.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/http/basic_auth.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/connection.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/base.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax/calendar_data_handler.js >> $(WEB_FILE)
@@ -59,6 +60,7 @@ test-node:
 		--reporter $(REPORTER) \
 		--growl test/helper.js \
 		test/caldav/sax/*_test.js \
+		test/caldav/http/*_test.js \
 		test/caldav/request/*_test.js \
 		test/caldav/*_test.js
 

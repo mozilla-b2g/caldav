@@ -14,7 +14,7 @@
 
   FakeXhr.prototype = {
     open: function() {
-      this.openArgs = arguments;
+      this.openArgs = Array.prototype.slice.call(arguments);
     },
 
     getResponseHeader: function(key) {

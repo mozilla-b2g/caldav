@@ -1,19 +1,23 @@
 testSupport.lib('xhr');
 testSupport.lib('connection');
+testSupport.lib('http/basic_auth');
 
 suite('caldav/connection', function() {
 
-  var subject;
   var Connection;
   var XHR;
-  var user = 'foo';
-  var password = 'bar';
-  var domain = 'http://foo.com';
+  var BasicAuth;
 
   suiteSetup(function() {
     Connection = Caldav.require('connection');
     XHR = Caldav.require('xhr');
+    BasicAuth = Caldav.require('http/basic_auth');
   });
+
+  var subject;
+  var user = 'foo';
+  var password = 'bar';
+  var domain = 'http://foo.com';
 
   setup(function() {
     subject = new Connection({
@@ -42,26 +46,33 @@ suite('caldav/connection', function() {
   });
 
 
-  suite('request', function() {
+  suite('#request', function() {
 
-    test('credentails', function() {
-      var result = subject.request({
-        url: domain
+    function commonCases() {
+      test('url without domain', function() {
+        var request = subject.request({
+          url: 'bar.json'
+        });
+
+        // we add slash
+        assert.equal(request.url, domain + '/bar.json');
+      });
+    }
+
+    suite('basic auth (default)', function() {
+
+      test('credentails', function() {
+        var result = subject.request({
+          url: domain
+        });
+
+        assert.instanceOf(result, BasicAuth);
+        assert.equal(result.url, domain);
+        assert.equal(result.password, password);
+        assert.equal(result.user, user);
       });
 
-      assert.instanceOf(result, XHR);
-      assert.equal(result.url, domain);
-      assert.equal(result.password, password);
-      assert.equal(result.user, user);
-    });
-
-    test('url without domain', function() {
-      var request = subject.request({
-        url: 'bar.json'
-      });
-
-      // we add slash
-      assert.equal(request.url, domain + '/bar.json');
+      commonCases();
     });
 
   });
