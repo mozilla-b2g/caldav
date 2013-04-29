@@ -11,7 +11,6 @@
     isNode: (typeof(window) === 'undefined')
   };
 
-
   /* stream hack for SAX */
 
   if (!testSupport.isNode) {
@@ -48,6 +47,23 @@
     }
   }
 
+  /* sinon */
+  if (testSupport.isNode) {
+    global.sinon = require('sinon');
+  } else {
+    window.require('/node_modules/sinon/pkg/sinon.js');
+  }
+
+  setup(function() {
+    this.sinon = sinon.sandbox.create();
+  });
+
+  teardown(function() {
+    this.sinon.restore();
+  });
+
+  /* chai */
+
   function setupChai(chai) {
     chai.Assertion.includeStack = true;
     assert = chai.assert;
@@ -58,7 +74,7 @@
     if (testSupport.isNode) {
       setupChai(require('chai'));
     } else {
-      require('/vendor/chai.js', function() {
+      require('/node_modules/chai/chai.js', function() {
         setupChai(chai);
       });
     }
