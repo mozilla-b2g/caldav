@@ -19,6 +19,28 @@ suite('http/google_oauth', function() {
     QueryString = Caldav.require('querystring');
   });
 
+  function mockTime() {
+    setup(function() {
+      this.clock = this.sinon.useFakeTimers();
+    });
+
+    teardown(function() {
+      this.clock.restore();
+    });
+  }
+
+  function mockXHR() {
+    var realXHR;
+    suiteSetup(function() {
+      realXHR = XHR.prototype.xhrClass;
+      XHR.prototype.xhrClass = FakeXhr;
+    });
+
+    suiteTeardown(function() {
+      XHR.prototype.xhrClass = realXHR;
+    });
+  }
+
   var subject;
   var connection;
   var url = 'http://foo.com/bar';
@@ -46,35 +68,28 @@ suite('http/google_oauth', function() {
   });
 
   suite('#_authenticateCode', function() {
-
-    var realXHR;
-    suiteSetup(function() {
-      realXHR = XHR.prototype.xhrClass;
-      XHR.prototype.xhrClass = FakeXhr;
-    });
-
-    suiteTeardown(function() {
-      XHR.prototype.xhrClass = realXHR;
-    });
+    mockXHR();
 
     var code = 'codexxx';
     test('without the .apiCredentials', function() {
       subject.connection.apiCredentials = null;
 
       assert.throws(function() {
-        subject.oauth = { code: 'cool' };
-        subject.authenticateCode();
+        subject._authenticateCode();
       });
     });
 
     test('without code', function(done) {
-      subject._authenticateCode(function(err, connection) {
+      connection.oauth = {};
+      subject._authenticateCode(function(err) {
         assert.instanceOf(err, Error, 'sends an error');
         done();
       });
     });
 
     suite('success', function() {
+      mockTime();
+
       var response = {
         access_token: 'token',
         refresh_token: 'refresh',
@@ -82,17 +97,11 @@ suite('http/google_oauth', function() {
         token_type: 'Bearer'
       };
 
-      var expectedResponse;
-      var expectedContent;
+      var expectedOauth;
+      var expectedRequest;
       var callsConnectionUpdate;
 
-      teardown(function() {
-        this.clock.restore();
-      });
-
       setup(function() {
-        this.clock = this.sinon.useFakeTimers();
-
         callsConnectionUpdate = false;
 
         connection.onupdate = function() {
@@ -100,16 +109,16 @@ suite('http/google_oauth', function() {
         };
 
         // copy expected properties over
-        expectedResponse = {};
+        expectedOauth = {};
         for (var key in response) {
-          expectedResponse[key] = response[key];
+          expectedOauth[key] = response[key];
         }
 
         // set initial oauth state
         connection.oauth = { code: code };
 
         // expected post data
-        expectedContent = QueryString.stringify({
+        expectedRequest = QueryString.stringify({
           code: code,
           client_id: connection.apiCredentials.client_id,
           client_secret: connection.apiCredentials.client_secret,
@@ -125,18 +134,18 @@ suite('http/google_oauth', function() {
 
           assert.isTrue(isComplete, 'completed assertions');
           assert.isTrue(callsConnectionUpdate, 'updated connection');
-          assert.deepEqual(connection.oauth, expectedResponse);
+          assert.deepEqual(connection.oauth, expectedOauth);
 
           done();
         });
 
         // verify xhr does the right thing
-        assert.equal(xhr.sendArgs[0], expectedContent, 'sends correct params');
+        assert.equal(xhr.sendArgs[0], expectedRequest, 'sends correct params');
         assert.equal(xhr.openArgs[0], 'POST', 'is HTTP post verb');
         isComplete = true;
 
-        expectedResponse.utc_expiry_time =
-          Date.now() + (response.expires_in * 1000)
+        expectedOauth.utc_expiry_time =
+          Date.now() + (response.expires_in * 1000);
 
         xhr.respond(
           JSON.stringify(response),
@@ -145,7 +154,89 @@ suite('http/google_oauth', function() {
         );
       });
     });
+  });
 
+  suite('#_refreshTokens', function() {
+    test('without connection.oauth.refresh_token', function(done) {
+      subject.oauth = {};
+      subject._refreshTokens(function(err) {
+        assert.instanceOf(err, Error);
+        done();
+      });
+    });
+
+    suite('success', function() {
+      mockTime();
+      mockXHR();
+
+      var startingOauth = {
+        refresh_token: 'xxx',
+        access_token: 'old',
+        expires_in: 3600,
+        token_type: 'Bearer',
+
+        // this is here purely so we can observe the change
+        utc_expiry_time: 111
+      };
+
+      var response = {
+        access_token: 'newcode',
+        expires_in: 3600,
+        token_type: 'Bearer'
+      };
+
+      var expectedOauth;
+      var expectedRequest;
+      var callsConnectionUpdate = false;
+      setup(function() {
+        connection.oauth = startingOauth;
+
+        callsConnectionUpdate = false;
+        connection.onupdate = function() {
+          callsConnectionUpdate = true;
+        };
+
+        expectedOauth = {
+          refresh_token: startingOauth.refresh_token,
+          access_token: response.access_token,
+          expires_in: response.expires_in,
+          token_type: response.token_type
+        };
+
+        expectedRequest = QueryString.stringify({
+          refresh_token: response.refresh_token,
+          client_id: connection.apiCredentials.client_id,
+          client_secret: connection.apiCredentials.client_secret,
+          grant_type: 'refresh_token'
+        });
+      });
+
+
+      test('send request', function(done) {
+        var isComplete = false;
+        var xhr = subject._refreshTokens(function() {
+          assert.isTrue(isComplete, 'assertions complete');
+          assert.isTrue(callsConnectionUpdate);
+
+          assert.deepEqual(connection.oauth, expectedOauth);
+          done();
+        });
+
+        assert.deepEqual(xhr.sendArgs[0], expectedRequest, 'sent formdata');
+
+        isComplete = true;
+
+        expectedOauth.utc_expiry_time =
+          Date.now() + (response.expires_in * 1000);
+
+        xhr.respond(
+          JSON.stringify(response),
+          200,
+          { 'Content-Type': 'application/json' }
+        );
+      });
+
+    });
   });
 
 });
