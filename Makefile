@@ -9,12 +9,7 @@ package: test-agent-config
 	rm -f $(WEB_FILE)
 	touch $(WEB_FILE)
 	mkdir $(VENDOR)
-	cp ./node_modules/mocha/mocha.js $(VENDOR)
-	cp ./node_modules/mocha/mocha.css $(VENDOR)
-	cp ./node_modules/chai/chai.js $(VENDOR)
 	cp ./lib/sax.js $(VENDOR)
-	cp ./node_modules/test-agent/test-agent.js $(VENDOR)
-	cp ./node_modules/test-agent/test-agent.css $(VENDOR)
 
 	echo '/* sax js - LICENSE: https://github.com/isaacs/sax-js/blob/master/LICENSE */' >> $(WEB_FILE)
 	cat $(VENDOR)/sax.js >> $(WEB_FILE);
