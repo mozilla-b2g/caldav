@@ -17,6 +17,7 @@ package: test-agent-config
 	echo '/* caldav.js - https://github.com/mozilla-b2g/caldav */' >> $(WEB_FILE)
 	cat $(LIB_ROOT)/caldav.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/responder.js >> $(WEB_FILE)
+	cat $(LIB_ROOT)/querystring.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/sax.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/template.js >> $(WEB_FILE)
 	cat $(LIB_ROOT)/query_builder.js >> $(WEB_FILE)

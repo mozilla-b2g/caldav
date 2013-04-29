@@ -29,9 +29,14 @@
       this.sendArgs = arguments;
     },
 
-    respond: function(data, code) {
+    respond: function(data, code, headers) {
+      if (!headers) {
+        this.responseHeaders['content-type'] = 'text/xml';
+      } else {
+        this.responseHeaders = headers;
+      }
+
       this.readyState = 4;
-      this.responseHeaders['content-type'] = 'text/xml';
       this.responseText = data;
       this.status = code || 200;
       this.onreadystatechange();

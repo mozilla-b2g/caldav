@@ -87,4 +87,20 @@ suite('caldav/connection', function() {
 
   });
 
+  suite('#update', function() {
+    test('without .onupdate handler', function() {
+      subject.update({ x: true });
+      assert.equal(subject.x, true);
+    });
+
+    test('with handler', function(done) {
+      subject.onupdate = function() {
+        assert.equal(subject.oauth, 'foo');
+        done();
+      };
+
+      subject.update({ oauth: 'foo' });
+    });
+  });
+
 });
