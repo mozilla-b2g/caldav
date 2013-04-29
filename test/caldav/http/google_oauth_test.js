@@ -109,7 +109,9 @@ suite('http/google_oauth', function() {
         };
 
         // copy expected properties over
-        expectedOauth = {};
+        expectedOauth = {
+          issued_at: Date.now()
+        };
         for (var key in response) {
           expectedOauth[key] = response[key];
         }
@@ -144,9 +146,6 @@ suite('http/google_oauth', function() {
         assert.equal(xhr.openArgs[0], 'POST', 'is HTTP post verb');
         isComplete = true;
 
-        expectedOauth.utc_expiry_time =
-          Date.now() + (response.expires_in * 1000);
-
         xhr.respond(
           JSON.stringify(response),
           200,
@@ -176,7 +175,7 @@ suite('http/google_oauth', function() {
         token_type: 'Bearer',
 
         // this is here purely so we can observe the change
-        utc_expiry_time: 111
+        issued_at: 111
       };
 
       var response = {
@@ -200,7 +199,8 @@ suite('http/google_oauth', function() {
           refresh_token: startingOauth.refresh_token,
           access_token: response.access_token,
           expires_in: response.expires_in,
-          token_type: response.token_type
+          token_type: response.token_type,
+          issued_at: Date.now()
         };
 
         expectedRequest = QueryString.stringify({
@@ -225,9 +225,6 @@ suite('http/google_oauth', function() {
         assert.deepEqual(xhr.sendArgs[0], expectedRequest, 'sent formdata');
 
         isComplete = true;
-
-        expectedOauth.utc_expiry_time =
-          Date.now() + (response.expires_in * 1000);
 
         xhr.respond(
           JSON.stringify(response),
