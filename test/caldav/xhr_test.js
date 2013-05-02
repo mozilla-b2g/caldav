@@ -1,7 +1,7 @@
 testSupport.lib('xhr');
 testSupport.helper('fake_xhr');
 
-suite('webacls/xhr', function() {
+suite('xhr', function() {
   var subject,
       Xhr,
       FakeXhr;

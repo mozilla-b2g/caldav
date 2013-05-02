@@ -23,7 +23,7 @@
       }
 
       requireBak.apply(this, arguments);
-    }
+    };
   }
 
   /* cross require */
@@ -45,7 +45,7 @@
     } else {
       window.require(file, callback);
     }
-  }
+  };
 
   /* sinon */
   if (testSupport.isNode) {
@@ -103,7 +103,7 @@
             cb(null, xhr.responseText);
           }
         }
-      }
+      };
       xhr.send(null);
     }
   };
@@ -121,6 +121,26 @@
   };
 
   testSupport.mock = {
+    useFakeXHR: function() {
+      testSupport.helper('fake_xhr');
+      testSupport.lib('xhr');
+
+      var realXHR;
+      var XHR;
+      var FakeXhr;
+
+      suiteSetup(function() {
+        XHR = Caldav.require('xhr');
+        FakeXhr = Caldav.require('support/fake_xhr');
+
+        realXHR = XHR.prototype.xhrClass;
+        XHR.prototype.xhrClass = FakeXhr;
+      });
+
+      suiteTeardown(function() {
+        XHR.prototype.xhrClass = realXHR;
+      });
+    },
 
     /**
      * Mocks out a method
@@ -165,7 +185,7 @@
 
   testSupport.helper = function(lib) {
     testSupport.require('/test/support/' + lib);
-  }
+  };
 
   Caldav = require('../lib/caldav/caldav.js');
 
@@ -179,12 +199,15 @@
         return require(path);
       }
       return oldRequire(path);
-    }
+    };
   }
 
+  /* since we have global mocks easier to just include these globally */
   requireRequest = function(callback) {
     testSupport.lib('responder');
-    testSupport.lib('xhr');
+    testSupport.lib('oauth2');
+    testSupport.lib('http/basic_auth');
+    testSupport.lib('http/oauth2');
     testSupport.lib('connection');
     testSupport.lib('sax');
     testSupport.lib('sax/base');
@@ -192,7 +215,6 @@
     testSupport.lib('request/errors');
     testSupport.lib('request/abstract');
     testSupport.lib('template');
-    testSupport.helper('fake_xhr');
     testSupport.lib('request/propfind');
 
     //in the future we need a callback for browser support.
