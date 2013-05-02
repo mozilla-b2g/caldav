@@ -1,4 +1,5 @@
 (function(module) {
+  console.log('I HAZ LOADED');
 
   function FakeXhr() {
     this.openArgs = null;
@@ -14,7 +15,7 @@
 
   FakeXhr.prototype = {
     open: function() {
-      this.openArgs = arguments;
+      this.openArgs = Array.prototype.slice.call(arguments);
     },
 
     getResponseHeader: function(key) {
@@ -26,18 +27,24 @@
     },
 
     send: function() {
-      this.sendArgs = arguments;
+      this.sendArgs = Array.prototype.slice.call(arguments);
     },
 
-    respond: function(data, code) {
+    respond: function(data, code, headers) {
+      if (headers) {
+        this.responseHeaders = headers;
+      } else {
+        this.responseHeaders['content-type'] = 'text/xml';
+      }
+
       this.readyState = 4;
-      this.responseHeaders['content-type'] = 'text/xml';
       this.responseText = data;
       this.status = code || 200;
       this.onreadystatechange();
     }
   };
 
+  console.log('EXPORTS ME', FakeXhr);
   module.exports = FakeXhr;
 
 }.apply(
