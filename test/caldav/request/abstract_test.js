@@ -77,22 +77,26 @@ suite('caldav/request/abstract.js', function() {
       assert.deepEqual(con.password, req.password);
     });
 
-    suite('error', function() {
+    suite('errors', function() {
       var calledWith;
 
-      setup(function(done) {
+      setup(function() {
         subject.send(function() {
           calledWith = arguments;
-          done();
         });
-
-        xhr = getXhr();
-        xhr.respond('NOT XML <div>', 500);
       });
 
-      test('on response', function() {
-        assert.equal(calledWith[0].code, 500);
-      });
+      function verifyStatusFailure(status, name) {
+        test('status ' + status, function() {
+          xhr = getXhr();
+          xhr.respond('', status);
+          assert.equal(calledWith[0].name, name);
+        });
+      }
+
+      verifyStatusFailure(403, 'caldav-unknown');
+      verifyStatusFailure(401, 'caldav-authentication');
+      verifyStatusFailure(500, 'caldav-server-failure');
     });
 
     suite('success', function() {

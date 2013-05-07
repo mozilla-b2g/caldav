@@ -39,19 +39,24 @@ suite('http/basic_auth', function() {
     assert.equal(subject.url, url);
   });
 
-  test('#send', function() {
-    var xhr = subject.send();
+  suite('#send', function() {
+    test('success', function() {
+      var xhr = subject.send();
 
-    assert.deepEqual(
-      xhr.openArgs,
-      [
-        'GET',
-        url,
-        subject.async,
-        connection.user,
-        connection.password
-      ]
-    );
+      assert.deepEqual(
+        xhr.openArgs,
+        [
+          'GET',
+          url,
+          subject.async,
+          connection.user,
+          connection.password
+        ]
+      );
+    });
+
+
+
   });
 
 });
