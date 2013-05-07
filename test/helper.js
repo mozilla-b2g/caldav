@@ -204,7 +204,10 @@
 
   /* since we have global mocks easier to just include these globally */
   requireRequest = function(callback) {
+    testSupport.helper('fake_xhr');
     testSupport.lib('responder');
+    testSupport.lib('errors');
+    testSupport.lib('xhr');
     testSupport.lib('oauth2');
     testSupport.lib('http/basic_auth');
     testSupport.lib('http/oauth2');
@@ -212,7 +215,6 @@
     testSupport.lib('sax');
     testSupport.lib('sax/base');
     testSupport.lib('sax/dav_response');
-    testSupport.lib('request/errors');
     testSupport.lib('request/abstract');
     testSupport.lib('template');
     testSupport.lib('request/propfind');

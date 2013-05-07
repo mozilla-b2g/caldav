@@ -1321,6 +1321,46 @@ function write (chunk) {
     [Caldav('responder'), Caldav] :
     [module, require('./caldav')]
 ));
+(function(module, ns) {
+
+  Errors = {};
+
+  /**
+   * Errors typically are for front-end routing purposes so the important
+   * part really is just the name and (maybe) the symbol... These are really
+   * intended to be consumed by name... So once a name has been assigned it
+   * should never be modified.
+   */
+  [
+    { symbol: 'Authentication', name: 'authentication' },
+    { symbol: 'InvalidEntrypoint', name: 'invalid-entrypoint' },
+    { symbol: 'ServerFailure', name: 'server-failure' },
+    { symbol: 'Unknown', name: 'unknown' }
+  ].forEach(function createError(def) {
+    var obj = Errors[def.symbol] = function(message) {
+      this.message = message;
+      this.name = 'caldav-' + def.name;
+
+      try {
+        throw new Error();
+      } catch (e) {
+        this.stack = e.stack;
+      }
+    };
+
+    // just so instanceof Error works
+    obj.prototype = Object.create(Error.prototype);
+  });
+
+  module.exports = Errors;
+
+}.apply(
+  this,
+  (this.Caldav) ?
+    [Caldav('errors'), Caldav] :
+    [module, require('./caldav')]
+));
+
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -3124,58 +3164,22 @@ function write (chunk) {
 ));
 (function(module, ns) {
 
-  function CaldavHttpError(code) {
-    this.code = code;
-    var message;
-    switch(this.code) {
-      case 401:
-        message = 'Wrong username or/and password';
-        break;
-      case 404:
-        message = 'Url not found';
-        break;
-      case 500:
-        message = 'Server error';
-        break;
-      default:
-        message = this.code;
-    }
-    Error.call(this, message);
-  }
-
-  CaldavHttpError.prototype = {
-    __proto__: Error.prototype,
-    constructor: CaldavHttpError
-  }
-
-  // Unauthenticated error for 
-  // Google Calendar
-  function UnauthenticatedError() {
-    var message = "Wrong username or/and password";
-    Error.call(this, message);
-  }
-
-  UnauthenticatedError.prototype = {
-    __proto__: Error.prototype,
-    constructor: UnauthenticatedError
-  }
-
-  module.exports = {
-    CaldavHttpError: CaldavHttpError,
-    UnauthenticatedError: UnauthenticatedError
-  };
-
-}.apply(
-  this,
-  (this.Caldav) ?
-    [Caldav('request/errors'), Caldav] :
-    [module, require('../caldav')]
-));
-(function(module, ns) {
-
   var SAX = ns.require('sax');
   var XHR = ns.require('xhr');
-  var Errors = ns.require('request/errors');
+  var Errors = ns.require('errors');
+
+  function determineHttpStatusError(status) {
+    var message = 'Cannot handle request due to server response';
+    var err = 'Unknown';
+
+    if (status === 500)
+      err = 'ServerFailure';
+
+    if (status === 401)
+      err = 'Authentication';
+
+    return new Errors[err](message);
+  }
 
   /**
    * Creates an (Web/Cal)Dav request.
@@ -3245,14 +3249,19 @@ function write (chunk) {
           return callback(err);
         }
 
+        // handle the success case
         if (xhr.status > 199 && xhr.status < 300) {
-          // success
           self.sax.close();
-          self._processResult(req, callback);
-        } else {
-          // fail
-          callback(new Errors.CaldavHttpError(xhr.status));
+          return self._processResult(req, callback);
         }
+
+        // probable error cases
+        callback(
+          determineHttpStatusError(xhr.status),
+          xhr
+        );
+
+
       });
 
       return req;
@@ -3587,8 +3596,8 @@ function write (chunk) {
 ));
 (function(module, ns) {
 
-  var Errors = ns.require('request/errors');
-  
+  var RequestErrors = ns.require('errors');
+
   /**
    * Creates a propfind request.
    *
@@ -3659,19 +3668,32 @@ function write (chunk) {
           return;
         }
 
-        principal = findProperty('current-user-principal', data, true);
+        // some fairly dumb allowances
+        principal =
+          findProperty('current-user-principal', data, true) ||
+          findProperty('principal-URL', data, true);
 
         if (!principal) {
-          principal = findProperty('principal-URL', data, true);
+          return callback(new Errors.InvalidEntrypoint(
+            'both current-user-principal and principal-URL are missing'
+          ));
         }
 
+        // per http://tools.ietf.org/html/rfc6638 we get unauthenticated
         if ('unauthenticated' in principal) {
-          callback(new Errors.UnauthenticatedError());
-        } else if (principal.href) {
-          callback(null, principal.href);
-        } else {
-          callback(new Errors.CaldavHttpError(404));
+          return callback(
+            new Errors.Authentication('caldav response is unauthenticated')
+          );
         }
+
+        // we might have both principal.href & unauthenticated
+        if (principal.href) {
+          return callback(null, principal.href);
+        }
+
+        callback(
+          new Errors.InvalidEntrypoint('no useful location information found')
+        );
       });
     },
 
@@ -4036,6 +4058,7 @@ function write (chunk) {
   exports.Resources = ns.require('resources');
   exports.Http = ns.require('http');
   exports.OAuth2 = ns.require('oauth2');
+  exports.Errors = ns.require('errors');
 
 }.apply(
   this,

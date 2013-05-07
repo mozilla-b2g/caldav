@@ -20,7 +20,7 @@ suite('caldav/request/propfind', function() {
     Connection = Caldav.require('connection');
     Home = Caldav.require('request/calendar_home');
     MockRequest = Caldav.require('support/mock_request');
-    Errors = Caldav.require('request/errors');
+    Errors = Caldav.require('errors');
   });
 
   suiteSetup(function() {
@@ -76,7 +76,7 @@ suite('caldav/request/propfind', function() {
         response[url] = {
           'current-user-principal': {
             status: '200',
-            value: { href:'foo.com/' }
+            value: { href: 'foo.com/' }
           }
         };
 
@@ -104,7 +104,7 @@ suite('caldav/request/propfind', function() {
 
         assert.equal(data, 'bar.com/');
       });
-      
+
       test('unauthenticated', function() {
         var req = request('_findPrincipal');
 
@@ -116,12 +116,28 @@ suite('caldav/request/propfind', function() {
             }
           }
         };
-        
         req.respond(null, response);
 
-        assert.equal(true, err instanceof Errors.UnauthenticatedError);
+        assert.instanceOf(err, Errors.Authentication);
       });
-      
+
+      test('without href', function() {
+        var req = request('_findPrincipal');
+        response[url] = {
+          'principal-URL': {}
+        };
+
+        req.respond(null, response);
+        assert.instanceOf(err, Errors.InvalidEntrypoint);
+      });
+
+      test('without useful response', function() {
+        var req = request('_findPrincipal');
+        response[url] = {};
+        req.respond(null, response);
+
+        assert.instanceOf(err, Errors.InvalidEntrypoint);
+      });
     });
 
     suite('#_findCalendarHome', function() {
