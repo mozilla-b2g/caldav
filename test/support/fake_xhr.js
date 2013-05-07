@@ -1,6 +1,4 @@
 (function(module) {
-  console.log('I HAZ LOADED');
-
   function FakeXhr() {
     this.openArgs = null;
     this.sendArgs = null;
@@ -44,7 +42,6 @@
     }
   };
 
-  console.log('EXPORTS ME', FakeXhr);
   module.exports = FakeXhr;
 
 }.apply(
