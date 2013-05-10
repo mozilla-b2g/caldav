@@ -2190,6 +2190,10 @@ function write (chunk) {
       }
     },
 
+    getResponseHeader: function(header) {
+      return this.xhr.getResponseHeader(header);
+    },
+
    _buildXHR: function(callback) {
       var header;
 
@@ -3278,7 +3282,30 @@ function write (chunk) {
 ));
 (function(module, ns) {
 
-  var XHR = ns.require('xhr');
+  var Abstract = ns.require('request/abstract');
+
+  function AssetRequest(asset, headers, method) {
+
+    this.url = asset.url;
+    Abstract.call(this, asset.connection);
+
+    this.payload = '';
+    this.xhr.headers = headers;
+    this.xhr.method = method;
+  }
+
+  AssetRequest.prototype = {
+
+    __proto__: Abstract.prototype,
+
+    _createPayload: function() {
+      return this.payload;
+    },
+
+    _processResult: function(req, callback) {
+      callback.call(this, null, req);
+    },
+  };
 
   /**
    * Creates an Http request for a single webdav resource.
@@ -3329,11 +3356,8 @@ function write (chunk) {
         headers['If-None-Match'] = options.etag;
       }
 
-      return this.connection.request({
-        url: this.url,
-        headers: headers,
-        method: method
-      });
+      var assetRequest = new AssetRequest(this, headers, method);
+      return assetRequest;
     },
 
     /**
@@ -3386,7 +3410,7 @@ function write (chunk) {
       }
 
       var req = this._buildRequest('PUT', options);
-      req.data = data;
+      req.payload = data;
 
       return req.send(function(err, xhr) {
         callback(err, xhr.responseText, xhr);
