@@ -6,6 +6,7 @@ suite('caldav/request/asset.js', function() {
   // classes
   var Asset;
   var Xhr;
+  var Errors;
   var Connection;
   var SAX;
   var FakeXhr;
@@ -29,6 +30,7 @@ suite('caldav/request/asset.js', function() {
     FakeXhr = Caldav.require('support/fake_xhr');
     Xhr = Caldav.require('xhr');
     Connection = Caldav.require('connection');
+    Errors = Caldav.require('errors');
 
     oldXhrClass = Xhr.prototype.xhrClass;
     Xhr.prototype.xhrClass = FakeXhr;
@@ -82,17 +84,29 @@ suite('caldav/request/asset.js', function() {
 
   });
 
-  test('#put', function(done) {
-    var content = 'foo';
+  suite('#put', function() {
+    test('with error', function() {
+      subject.put({}, '', function(err) {
+        assert.ok(err, 'returns error');
+        console.log(err);
+        assert.instanceOf(err, Errors.Authentication, 'assets validate http');
+      });
 
-    subject.put({ etag: 'x' }, content, function(err, data, xhr) {
-      assert.equal(xhr.openArgs[0], 'PUT');
-      assert.equal(xhr.sendArgs[0], content);
-      done();
+      var xhr = lastXHR();
+      xhr.respond('', 401);
     });
 
-    var xhr = lastXHR();
-    xhr.respond('', 201);
+    test('success', function(done) {
+      var content = 'foo';
+      subject.put({ etag: 'x' }, content, function(err, data, xhr) {
+        assert.equal(xhr.openArgs[0], 'PUT');
+        assert.equal(xhr.sendArgs[0], content);
+        done();
+      });
+
+      var xhr = lastXHR();
+      xhr.respond('', 201);
+    });
   });
 
   test('#delete', function(done) {
