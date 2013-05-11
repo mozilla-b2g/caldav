@@ -3303,7 +3303,7 @@ function write (chunk) {
     },
 
     _processResult: function(req, callback) {
-      callback.call(this, null, req);
+      callback.call(this, null, req.xhr);
     },
   };
 
