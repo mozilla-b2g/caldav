@@ -2107,11 +2107,25 @@ function write (chunk) {
 */
 (function(module, ns) {
   var Native;
+  var Errors = ns.require('errors');
 
   if (typeof(window) === 'undefined') {
     Native = require('xmlhttprequest').XMLHttpRequest;
   } else {
     Native = window.XMLHttpRequest;
+  }
+
+  function determineHttpStatusError(status) {
+    var message = 'Cannot handle request due to server response';
+    var err = 'Unknown';
+
+    if (status === 500)
+      err = 'ServerFailure';
+
+    if (status === 401)
+      err = 'Authentication';
+
+    return new Errors[err](message);
   }
 
   /**
@@ -2155,6 +2169,7 @@ function write (chunk) {
     password: null,
     url: null,
     streaming: true,
+    validateStatus: false,
 
     headers: {},
     data: null,
@@ -2272,7 +2287,18 @@ function write (chunk) {
           }
 
           this.waiting = false;
-          callback(null, this.xhr);
+
+          if (
+            !this.validateStatus ||
+            (
+              this.xhr.status > 199 &&
+              this.xhr.status < 300
+            )
+          ) {
+            return callback(null, this.xhr);
+          }
+
+          callback(determineHttpStatusError(this.xhr.status), this.xhr);
         }
       }.bind(this));
 
@@ -2581,7 +2607,8 @@ function write (chunk) {
   }
 
   BasicAuth.prototype = {
-    __proto__: XHR.prototype
+    __proto__: XHR.prototype,
+    validateStatus: true
   };
 
 
@@ -2639,6 +2666,8 @@ function write (chunk) {
 
   Oauth2.prototype = {
     __proto__: XHR.prototype,
+
+    validateStatus: true,
 
     _sendXHR: function(xhr) {
       xhr.setRequestHeader(
@@ -3166,20 +3195,6 @@ function write (chunk) {
 
   var SAX = ns.require('sax');
   var XHR = ns.require('xhr');
-  var Errors = ns.require('errors');
-
-  function determineHttpStatusError(status) {
-    var message = 'Cannot handle request due to server response';
-    var err = 'Unknown';
-
-    if (status === 500)
-      err = 'ServerFailure';
-
-    if (status === 401)
-      err = 'Authentication';
-
-    return new Errors[err](message);
-  }
 
   /**
    * Creates an (Web/Cal)Dav request.
@@ -3249,19 +3264,8 @@ function write (chunk) {
           return callback(err);
         }
 
-        // handle the success case
-        if (xhr.status > 199 && xhr.status < 300) {
-          self.sax.close();
-          return self._processResult(req, callback);
-        }
-
-        // probable error cases
-        callback(
-          determineHttpStatusError(xhr.status),
-          xhr
-        );
-
-
+        self.sax.close();
+        return self._processResult(req, callback);
       });
 
       return req;
