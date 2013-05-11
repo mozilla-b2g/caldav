@@ -88,7 +88,6 @@ suite('caldav/request/asset.js', function() {
     test('with error', function() {
       subject.put({}, '', function(err) {
         assert.ok(err, 'returns error');
-        console.log(err);
         assert.instanceOf(err, Errors.Authentication, 'assets validate http');
       });
 
