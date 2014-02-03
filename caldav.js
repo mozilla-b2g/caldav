@@ -3228,6 +3228,9 @@ function write (chunk) {
       url: this.url,
       headers: { 'Content-Type': 'text/xml' }
     });
+
+    console.log('[request] CREATE' + '\n' +
+         JSON.stringify(this) + '\n');
   }
 
   Abstract.prototype = {
@@ -3258,13 +3261,20 @@ function write (chunk) {
         self.sax.write(chunk);
       };
 
+      console.log('[request] SEND' + '\n' +
+           JSON.stringify(req) + '\n');
+
       // in the future we may stream data somehow
       req.send(function xhrResult(err, xhr) {
         if (err) {
+          console.error('[request] ERROR' + '\n' +
+               err.toString() + '\n');
           return callback(err);
         }
 
         self.sax.close();
+        console.log('[request] RESULT' + '\n' +
+             JSON.stringify(self.sax.root) + '\n');
         return self._processResult(req, callback);
       });
 
@@ -3332,6 +3342,11 @@ function write (chunk) {
       if (options && options.etag) {
         headers['If-None-Match'] = options.etag;
       }
+
+      console.log('[asset] BUILD_REQUEST' + '\n' +
+           method + '\n' +
+           url + '\n' +
+           JSON.stringify(headers) + '\n');
 
       return this.connection.request({
         url: this.url,
@@ -3472,6 +3487,12 @@ function write (chunk) {
      * @param {Obj} [content] optional content.
      */
     prop: function(tagDesc, attr, content) {
+      console.log('[propfind] PROP' + '\n' +
+           JSON.stringify({
+             tagDesc: tagDesc,
+             attr: attr,
+             content: content
+           }) + '\n');
       this._props.push(this.template.tag(tagDesc, attr, content));
     },
 
@@ -3508,6 +3529,8 @@ function write (chunk) {
 
     _createPayload: function() {
       var content = this.template.tag('prop', this._props.join(''));
+      console.log('[propfind] CREATE_PAYLOAD' + '\n' +
+           JSON.stringify(content) + '\n');
       return this.template.render(content);
     },
 
