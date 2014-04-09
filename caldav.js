@@ -2744,8 +2744,13 @@ function write (chunk) {
 
 (function(module, ns) {
 
-  var Caldav = ns.require('caldav'),
-      XHR = ns.require('xhr');
+  var Caldav;
+  if (typeof(window) !== 'undefined') {
+    Caldav = window.Caldav;
+  } else {
+    Caldav = ns.require('caldav');
+  }
+  var XHR = ns.require('xhr');
 
   /**
    * Connection objects contain
