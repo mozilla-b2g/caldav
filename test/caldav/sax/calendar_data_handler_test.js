@@ -34,33 +34,39 @@ suite('caldav/sax/calendar_data_handler', function() {
     };
   });
 
-  suite('ontext', function() {
-    var originalHandler;
+  // Should treat text and xml character data the same.
+  [
+    'ontext',
+    'oncdata'
+  ].forEach(function(nodetype) {
+    suite(nodetype, function() {
+      var originalHandler;
 
-    suiteSetup(function() {
-      originalHandler = Handler.parseICAL;
-    });
+      suiteSetup(function() {
+        originalHandler = Handler.parseICAL;
+      });
 
-    teardown(function() {
-      Handler.parseICAL = originalHandler;
-    });
+      teardown(function() {
+        Handler.parseICAL = originalHandler;
+      });
 
-    test('without handler', function() {
-      callProxy('ontext', 'foo');
-      assert.equal(proxy.current[0], 'foo');
-    });
 
-    test('with handler', function() {
-      var calledWith;
-      Handler.parseICAL = function() {
-        calledWith = arguments;
-        return 'hit';
-      }
+      test('without handler', function() {
+        callProxy(nodetype, 'foo');
+        assert.equal(proxy.current[0], 'foo');
+      });
 
-      callProxy('ontext', 'baz');
-      assert.deepEqual(calledWith, ['baz']);
-      assert.equal(proxy.current[0], 'hit');
+      test('with handler', function() {
+        var calledWith;
+        Handler.parseICAL = function() {
+          calledWith = arguments;
+          return 'hit';
+        };
+
+        callProxy(nodetype, 'baz');
+        assert.deepEqual(calledWith, ['baz']);
+        assert.equal(proxy.current[0], 'hit');
+      });
     });
   });
 });
-

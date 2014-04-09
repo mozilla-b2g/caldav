@@ -15,6 +15,7 @@ suite('caldav/sax', function() {
   // to make testing easier.
   function TestHander() {
     this.text = [];
+    this.cdata = [];
     this.opentag = [];
     this.closetag = [];
     this.error = [];
@@ -22,9 +23,13 @@ suite('caldav/sax', function() {
     this.end = [];
 
     var events = [
-      'ontext', 'onclosetag',
-      'onopentag', 'onerror',
-      'oncomplete', 'onend'
+      'ontext',
+      'oncdata',
+      'onclosetag',
+      'onopentag',
+      'onerror',
+      'oncomplete',
+      'onend'
     ];
   }
 
@@ -32,6 +37,10 @@ suite('caldav/sax', function() {
 
     ontext: function(data, handler) {
       handler.text.push(data);
+    },
+
+    oncdata: function(data, handler) {
+      handler.cdata.push(data);
     },
 
     onclosetag: function(data, handler) {
@@ -235,6 +244,11 @@ suite('caldav/sax', function() {
   test('#ontext', function() {
     subject.ontext('foo');
     firesHandler('text', 'foo');
+  });
+
+  test('#oncdata', function() {
+    subject.oncdata('foo');
+    firesHandler('cdata', 'foo');
   });
 
   test('#onerror', function() {
